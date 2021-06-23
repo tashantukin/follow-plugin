@@ -1,0 +1,10 @@
+.followers-mid-sec{padding: 20px 20px;}
+.follower-act{padding-top: 5px;}
+.form-control.style-square { display: inline-block; width: 100%; border: 1px solid #c2c2c2; padding: 0 15px; font-size: 13px; font-weight: 600; font-style: normal; font-stretch: normal; line-height: 1.23;  border-radius: 0; letter-spacing: normal; color: #474746; height: 40px; }
+.form-control.input-width-400 { width: 400px; max-width: 100%; }
+.v-align-center { vertical-align: middle; }
+.mr-5 { margin-right: 5px; }
+#followers .page-content-top h4 {font-size: 16px;}
+#followers .page-content-top p{ font-size: 14px; color: #4D4D4D;}
+.followers-mid-sec .form-group label{font-size: 14px;font-weight: 600;color: #4D4D4D;}
+.followers-mid-sec .onoffswitch-inner::before {background-color:#50C8FF;}
