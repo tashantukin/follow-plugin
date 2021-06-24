@@ -17,6 +17,10 @@
   var pathname = (window.location.pathname + window.location.search).toLowerCase();
   var companies;
   var merchantName;
+  var isCompanyFollowAllowed;
+  var isUserFollowAllowed;
+  var isItemFollowAllowed;
+  
 
   const distinct = (value, index, self) =>
   {
@@ -79,7 +83,7 @@
         }
     });
   }
-  function getUserCustomFields(merchantGuid,callback) {
+ async function  getUserCustomFields(merchantGuid,callback) {
     var apiUrl = `/api/v2/users/${merchantGuid}`;
 
     console.log(apiUrl);
@@ -634,134 +638,90 @@
     });
   }
   
-
-  class Follow {
-    constructor(userId)
-    {
+  function appendFollowButton(page)
+  {
+   
+    let storeFrontButton = `<div class="following-button-con"> <a class="following-button follow" href="#">Follow</a></div>`
+    let itemDetailButton = `<div class="following-button-con"><a class="following-button" href="#">Follow</a></div>`
     
-      this.userId = userId;
-      this.userType;
-      this.status;
-      this.isCompanyFollowAllowed;
-      this.isItemFollowAllowed;
-      this.isUserFollowAllowed;
-      this.followers;
-    }
-
-    companyFollowStatus()
-    {
-      getMarketplaceCustomFields(function (result)
+    var followersDivStoreFront = `<input type="hidden" id="followers-list" >`;
+    var followersDivItemDetails = `<input type="hidden" id="followers-list" >`;
+   
+    page == 'item' ? ($('.item-star').append(itemDetailButton)) ($('body').append(followersDivItemDetails)) : ($('.store-rating').before(storeFrontButton)) ($('body').append(followersDivStoreFront)) ;
+  }
+  
+ let checkIfFollowAllowed = async (type) =>
+  {
+    console.log(`user ${type}`)
+     getMarketplaceCustomFields(function (result)
+     {
+    
+      $.each(result, function (index, cf)
       {
-        $.each(result, function (index, cf)
-        {
+        var status;
+        if (type == 'company') {
           if (cf.Name == 'allow_company_follow' && cf.Code.startsWith(customFieldPrefix)) {
-          return this.isCompanyFollowAllowed = cf.Values[0];
-            
+            var isCompanyFollowAllowed = cf.Values[0];
+            status = isCompanyFollowAllowed == 'true' ? appendFollowButton('user') : '';
+            return status;
           }
-          
-        })
-      })
-      
-    }
-
-    userFollowStatus(){
-      getMarketplaceCustomFields(function (result)
-      {
-        $.each(result, function (index, cf)
-        {
-          if (cf.Name == 'allow_users_follow' && cf.Code.startsWith(customFieldPrefix)) {
-          return cf.Values[0];
-            
-          }
-          
-        })
-      })
-    }
-
-    itemsFollowStatus()
-    {
-      getMarketplaceCustomFields(function (result)
-      {
-        $.each(result, function (index, cf)
-        {
-          if (cf.Name == 'allow_items_follow' && cf.Code.startsWith(customFieldPrefix)) {
-             return this.isItemFollowAllowed = cf.Values[0];
-            
-          }  
-        })
-      })
-    }
-
-    get userType()
-    {
-      
-      getUserCustomFields(this.userId, function (result)
-      {
-        if (!result) { // if no cf, User
-          // this.userType = 'User';
-          return 'User'
-        } else {
-          $.each(result, function (index, cf)
-          {
-            if (cf.Name == 'company_status' && cf.Code.startsWith(customFieldPrefix)) {
-              if (cf.Values[0] == 'true') {
-                // this.userType = 'Company'
-                return 'Company'
-              } else {
-                //  this.userType = 'User';
-                return 'User'
-              }
-            }
-          })
         }
+        if (type == 'user') {
+           if (cf.Name == 'allow_users_follow' && cf.Code.startsWith(customFieldPrefix)) {
+             var isUserFollowAllowed = cf.Values[0];
+             console.log('here')
+             status = isUserFollowAllowed == 'true' ? appendFollowButton('user') : '';
+             console.log(status);
+             return status;
+           }
+        }
+        if (type == 'item') {
+            if (cf.Name == 'allow_items_follow' && cf.Code.startsWith(customFieldPrefix)) {
+              var isItemFollowAllowed = cf.Values[0];
+              status = isItemFollowAllowed == 'true' ? appendFollowButton('item') : '';
+              return status;
+           }
+          
+        }
+          
       })
-    }
-
     
 
-  } 
+   });
+   
+  
+  }
   
   $(document).ready(function ()
   {
     
     if (pathname.indexOf('user/merchantaccount') >= 0) {
-
-      const follow = new Follow(userId);
-
-      console.log(follow.userFollowStatus());
-
-
-
-      var isCompanyFollowAllowed;
-      var isUserFollowAllowed;
-      var isItemFollowAllowed;
-      $('.follow-con-name').hide();
-
-      getMarketplaceCustomFields(function(result) {
-        $.each(result, function(index, cf) {
-          if (cf.Name == 'allow_company_follow' && cf.Code.startsWith(customFieldPrefix)) {
-            isCompanyFollowAllowed= cf.Values[0];
-          }
-          if (cf.Name == 'allow_users_follow' && cf.Code.startsWith(customFieldPrefix)) {
-            isUserFollowAllowed = cf.Values[0];
-          }
-          if (cf.Name == 'allow_items_follow' && cf.Code.startsWith(customFieldPrefix)) {
-          isItemFollowAllowed = cf.Values[0];
-            
-          }
-            
-        })
-
-      //   if ($('#storefrontMerchantGuid').val() != userId && !$('#subAccountUserGuid').length ) {
-        
-      //     loadCustomFields($('#storefrontMerchantGuid').val(),'not settings', isCompanyFollowAllowed, isUserFollowAllowed, '')
-      //     console.log('in here');
-           
-      //  }
-
-    });
-
+     
+        var userType;
       
+        getUserCustomFields(userId, function (result)
+        {
+          userType = (!result) || !("company_status" in result) || (result == null) ?  // no cf means not company
+            'user'
+            :
+            $.each(result, function (index, cf)
+            {
+              if (cf.Name == 'company_status' && cf.Code.startsWith(customFieldPrefix)) {
+                var companyStatus = cf.Values[0];
+                userType = companyStatus == 'true' ? 'company' : 'user'
+                
+              }
+
+              if (cf.Name == 'followers_list' && cf.Code.startsWith(customFieldPrefix)) {
+                currentFollowers = cf.Values[0];
+              }
+             
+            })
+          checkIfFollowAllowed(userType);
+           
+        })
+      
+     
      $(document).on("click", "#follow", function ()
      {
        console.log('follow click');
@@ -788,9 +748,7 @@
  
       
      });
-     
-
-    
+         
     }
 
     if (pathname.indexOf('user/item/detail') >= 0) {
