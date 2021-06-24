@@ -28,6 +28,10 @@ $packageCustomFields = callAPI("GET", null, $url, false);
         if ($cf['Name'] == 'allow_items_follow' && substr($cf['Code'], 0, strlen($customFieldPrefix)) == $customFieldPrefix) {
             $items_code = $cf['Code'];
         }
+
+        if ($cf['Name'] == 'group_name' && substr($cf['Code'], 0, strlen($customFieldPrefix)) == $customFieldPrefix) {
+            $group_code = $cf['Code'];
+        }
       
     }
 
@@ -40,6 +44,11 @@ if($status_type == 'Users'){
 if($status_type == 'items'){
     $status_code = $items_code;
 }
+if($status_type == 'groupname'){
+    $status_code = $group_code;
+}
+
+
 
     $data = [
         'CustomFields' => [
