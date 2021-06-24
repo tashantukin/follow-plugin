@@ -9,6 +9,7 @@ var customFieldPrefix = packageId.replace(/-/g, "");
 var userId = $('#userGuid').val();
 var accessToken = 'Bearer ' + getCookie('webapitoken')
 var pathname = (window.location.pathname + window.location.search).toLowerCase();
+var groupname;
 //switch
 function waitForElement(elementPath, callBack) {
   window.setTimeout(function () {
@@ -19,11 +20,26 @@ function waitForElement(elementPath, callBack) {
     }
   }, 500);
 }
+  
+function getMarketplaceCustomFields(callback){
+  var apiUrl = '/api/v2/marketplaces'
+  $.ajax({
+      url: apiUrl,
+      method: 'GET',
+      contentType: 'application/json',
+      success: function(result) {
+          if (result) {
+              callback(result.CustomFields);
+          }
+      }
+  });
+}
+  
  function appendColumns(){
   waitForElement("#no-more-tables", function ()
   {
   
-    var status = `<th data-column="22" tabindex="0" scope="col" role="columnheader" aria-disabled="false" aria-controls="no-more-tables" unselectable="on" aria-sort="none" aria-label="User Type: No sort applied, activate to apply an ascending sort" style="user-select: none;"><div class="tablesorter-header-inner">Company</div></th>`;
+    var status = `<th data-column="22" tabindex="0" scope="col" role="columnheader" aria-disabled="false" aria-controls="no-more-tables" unselectable="on" aria-sort="none" aria-label="User Type: No sort applied, activate to apply an ascending sort" style="user-select: none;"><div class="tablesorter-header-inner">${groupname}</div></th>`;
     $('#no-more-tables thead tr th:nth-child(21)').after(status);
     $('#no-more-tables thead tr th:nth-child(23)').attr('data-column', '23');
     $("tbody tr:not(.loaded)").each(function ()
@@ -69,8 +85,7 @@ function getUserCustomfields(id, el){
 		});
 }  
   
-function saveCustomFields(status, merchantId)
-	{
+function saveCustomFields(status, merchantId){
 		var data  = { 'status' : status, 'user-id' : merchantId } 
 		//console.log(data);
 		var apiUrl = packagePath + '/save_status.php';
@@ -100,7 +115,22 @@ function saveCustomFields(status, merchantId)
       var axiosCDN = `<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.js"></script>`;
       $('body').append(axiosCDN);
 
-      appendColumns();
+      getMarketplaceCustomFields(function (result)
+      {
+       
+        $.each(result, function (index, cf)
+        {
+          if (cf.Name == 'group_name' && cf.Code.startsWith(customFieldPrefix)) {
+            groupname = cf.Values[0];
+           appendColumns();
+          }
+          
+    
+        })
+      
+      })
+
+    //  appendColumns();
 
       //filter
       $('#search_btn').on('click', function (e)
