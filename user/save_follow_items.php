@@ -10,6 +10,13 @@ $user_id = $content['user-id'];
 $baseUrl = getMarketplaceBaseUrl();
 $admin_token = getAdminToken();
 $customFieldPrefix = getCustomFieldPrefix();
+
+$userToken = $_COOKIE["webapitoken"];
+$url = $baseUrl . '/api/v2/users/'; 
+$result = callAPI("GET", $userToken, $url, false);
+$userId = $result['ID'];
+
+
 // Query to get marketplace id
 
 // https://{{your-marketplace}}.arcadier.io/api/v2/users/{{userID}}
@@ -32,10 +39,10 @@ $packageCustomFields = callAPI("GET", null, $url, false);
                 ],
             ],
         ];
-        echo json_encode(['date' => $data]);
+        echo json_encode(['items' => $data]);
 
 
-    $url = $baseUrl . '/api/v2/users/' . $user_id;
+    $url = $baseUrl . '/api/v2/users/' . $userId;
     echo json_encode(['url' => $url]);
     $result = callAPI("PUT", $admin_token['access_token'], $url, $data);
     echo json_encode(['result' => $result]);

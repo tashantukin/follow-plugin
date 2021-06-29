@@ -9,9 +9,11 @@
   var hostname = window.location.hostname;
   var urls = window.location.href.toLowerCase();
   var userId = $("#userGuid").val();
+  var itemGuid = $('#itemGuid').val();
   var merchantId = $('#storefrontMerchantGuid').val()
   var followerList = [];
   var followingList = [];
+  var itemFollowingList = [];
   var itemList = [];
   var currentUser = $('#subAccountUserGuid').length ? $('#subAccountUserGuid').val() : userId;
   var currentMerchant = $('#storefrontMerchantGuid').length ? $('#storefrontMerchantGuid').val() : $('#merchantGuid').val();
@@ -133,9 +135,8 @@
 			{
         console.log(response);
         getFollowers();
-        getFollowing();
+        getFollowing('users');
 
-    
 			},
 			error: function (jqXHR, status, err)
 			{
@@ -158,6 +159,7 @@
 			{
 
         console.log(response);
+        getFollowing('items');
        // loadCustomFields(merchantId,'');
 
 			},
@@ -167,8 +169,6 @@
 			}
 		});
   }
-
-
 
   function loadCustomFields(merchantGuid, page)
   {
@@ -590,7 +590,7 @@
     });
   }
   
-  function getFollowing()
+  function getFollowing(type)
   {
     $('#following-list').val('');
     getUserCustomFields(userId, function (result)
@@ -598,14 +598,32 @@
       //check following users
       $.each(result, function (index, cf)
       {
-        if (cf.Name == 'following_users' && cf.Code.startsWith(customFieldPrefix)) {
-          var currentFollowing = cf.Values[0];
-          console.log(`following ${currentFollowing}`)
-          if (currentFollowing) {
-            $('#following-list').val(currentFollowing);
-            followingList = $('#following-list').val().split(',');
+        if (type == 'items') {
+          if (cf.Name == 'following_items' && cf.Code.startsWith(customFieldPrefix)) {
+            var followingItems = cf.Values[0];
+            console.log(`following items ${followingItems}`)
+            if (followingItems) {
+              $('#item-following-list').val(followingItems);
+              itemFollowingList = $('#item-following-list').val().split(',');
+              itemFollowingList.includes(itemGuid) ? ($('#follow').attr('status', 'following'), $('#follow').text("Following")) : ( $('#follow').attr('status', 'not-following'),$('#follow').text("Follow") );
+            } else {
+              $('#follow').attr('status', 'not-following')
+              $('#follow').text("Follow")
+            }
+          }
+          
+        } else {
+          if (cf.Name == 'following_users' && cf.Code.startsWith(customFieldPrefix)) {
+            var currentFollowing = cf.Values[0];
+            console.log(`following ${currentFollowing}`)
+            if (currentFollowing) {
+              $('#following-list').val(currentFollowing);
+              followingList = $('#following-list').val().split(',');
+              
+            }
           }
         }
+       
       })
     })
   }
@@ -701,9 +719,11 @@
   {
     
     if (pathname.indexOf('user/merchantaccount') >= 0) {
-     
-      var followingDivStoreFront = `<input type="hidden" id="following-list" >`;
-      $('body').append(followingDivStoreFront);
+
+      if (!$('.register-link').length || currentMerchant != userId) { // only for registered users
+
+        var followingDivStoreFront = `<input type="hidden" id="following-list" >`;
+        $('body').append(followingDivStoreFront);
         var userType;
       
         getUserCustomFields(userId, function (result)
@@ -720,73 +740,73 @@
               }
             })
           
-            checkIfFollowAllowed(userType);
+          checkIfFollowAllowed(userType);
         })
        
-      getFollowing();
+        getFollowing('users');
 
-
-     $(document).on("click", "#follow", function ()
-     {
-       console.log('follow click');
-       var allFollowers;
-       var allFollowing;
-       if (followerList.length || followingList.length ) {
-         console.log('if');
-         followerList = followerList.filter(function (value) { return value.length > 5 })
-         followingList = followingList.filter(function (value) { return value.length > 5 })
-         //unfollowing
-         console.log(JSON.stringify(followerList));
-           allFollowers = $('#follow').attr('status') == 'following'  ? followerList.filter(function (value) { return value !==  userId; })
-           : [...followerList, $("#userGuid").val()];
+        $(document).on("click", "#follow", function ()
+        {
+          console.log('follow click');
+          var allFollowers;
+          var allFollowing;
+          if (followerList.length || followingList.length) {
+            console.log('if');
+            followerList = followerList.filter(function (value) { return value.length > 5 })
+            followingList = followingList.filter(function (value) { return value.length > 5 })
+            //unfollowing
+            console.log(JSON.stringify(followerList));
+            allFollowers = $('#follow').attr('status') == 'following' ? followerList.filter(function (value) { return value !== userId; })
+              : [...followerList, $("#userGuid").val()];
          
-           allFollowing = $('#follow').attr('status') == 'following'  ? followingList.filter(function (value) { return value !==  merchantId; })
-           : [...followingList, merchantId];
+            allFollowing = $('#follow').attr('status') == 'following' ? followingList.filter(function (value) { return value !== merchantId; })
+              : [...followingList, merchantId];
             
-           saveCustomFields(allFollowers, currentMerchant, allFollowing);
-           //$('#follow').attr('status', 'not-following')
-       } else {
-         console.log('else');
-           saveCustomFields(currentUser, currentMerchant, merchantId);
-        // $('#follow').attr('status', 'following')
-         }
+            saveCustomFields(allFollowers, currentMerchant, allFollowing);
+            //$('#follow').attr('status', 'not-following')
+          } else {
+            console.log('else');
+            saveCustomFields(currentUser, currentMerchant, merchantId);
+            // $('#follow').attr('status', 'following')
+          }
          
 
-     });
-         
+        });
+      }
     }
 
     if (pathname.indexOf('user/item/detail') >= 0) {
 
-      checkIfFollowAllowed('item');
-     
-      
-      //            //items following
-                
-      //           waitForElement('#follow-item', function () {
-      //             if ($('#item-following-list').length) {
-      //               itemList = $('#item-following-list').val().split(',');
-      //               itemList.includes($('#itemGuid').val()) ? ($('#follow-item').val('Unfollow'), $('#follow-item').prop("checked", true), $('#follow-item').text('Unfollow'), $('#follow-item').attr('status', 'following')) : ($('#follow-item').prop("checked", false), $('#follow-item').val('Follow'), $('#follow-item').text('Follow'), $('#follow-item').attr('status', 'not-following'));
-    
-      //             }
-      //           });
+      if ( (!$('.register-link').length) && (currentMerchant != userId)) {
 
-      //         }
-              
-      //       });
+        checkIfFollowAllowed('item');
 
+        var itemFollowingDiv = `<input type="hidden" id="item-following-list" >`;
+        $('body').append(itemFollowingDiv);
 
+        getFollowing('items');
 
-      //     }
-         
-  
-      // });
+        $(document).on("click", "#follow", function ()
+        {
+          console.log('follow click');
+          var allItems;
+          if (itemFollowingList.length) {
+            console.log('if');
+            itemFollowingList = itemFollowingList.filter(function (value) { return value.length > 5 })
+            console.log(JSON.stringify(itemFollowingList));
 
+            allItems = $('#follow').attr('status') == 'following' ? itemFollowingList.filter(function (value) { return value !== itemGuid; })
+              : [...itemFollowingList, itemGuid];
+          
+            saveItemCustomFields(allItems, itemGuid);
+            $('#follow-item').attr('status', 'not-following')
+            //$('#follow').attr('status', 'not-following')
+          } else {
+            saveItemCustomFields(itemGuid, userId);
+          }
 
-
-         
-      
-      
+        });
+      }
     }
 
     // if (pathname.indexOf('/user/marketplace/seller-settings') > -1 || pathname.indexOf('/user/marketplace/be-seller') > -1) {
@@ -826,29 +846,39 @@
 
    
 
-    $(document).on("click", "#follow-item", function ()
-    {
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // $(document).on("click", "#follow-item", function ()
+    // {
       
-      //if ($('#subAccountUserGuid').length) {
-        var allItems;
-        if (itemList.length) {
-        //unfollowing
-          allItems = $('#follow-item').attr('status') == 'following'  ? itemList.filter(function (value, index, arr) { return value != $('#itemGuid').val(); }) 
-          : [...itemList, $('#itemGuid').val()];
+    //   //if ($('#subAccountUserGuid').length) {
+    //     var allItems;
+    //     if (itemList.length) {
+    //     //unfollowing
+    //       allItems = $('#follow-item').attr('status') == 'following'  ? itemList.filter(function (value, index, arr) { return value != $('#itemGuid').val(); }) 
+    //       : [...itemList, $('#itemGuid').val()];
            
-          console.log(allItems);
+    //       console.log(allItems);
 
-          saveItemCustomFields(allItems, userId);
-          $('#follow-item').attr('status', 'not-following')
+    //       saveItemCustomFields(allItems, userId);
+    //       $('#follow-item').attr('status', 'not-following')
           
-        } else {
+    //     } else {
          
-          saveItemCustomFields($('#itemGuid').val(), userId);
+    //       saveItemCustomFields($('#itemGuid').val(), userId);
          
-        }
+    //     }
         
-    //  }
-    });
+    // //  }
+    // });
 
 
   });
