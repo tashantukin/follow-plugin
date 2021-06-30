@@ -121,6 +121,25 @@
     });
   }
 
+
+  function getItemDetails(itemId, callback)
+  {
+    var apiUrl = `/api/v2/items/${itemId}`;
+
+    console.log(apiUrl);
+    $.ajax({
+      url: apiUrl,
+      method: "GET",
+      contentType: "application/json",
+      success: function (result) {
+        if (result) {
+          callback(result);
+
+        }
+      },
+    });
+  }
+
   function saveCustomFields(followersList, merchantId, followingList)
 	{
 		var data  = { 'followers-id' : followersList, 'merchant-id' : merchantId, 'user-id' : userId, 'following-id' : followingList } 
@@ -590,7 +609,7 @@
     });
   }
   
-  function getFollowing(type)
+  function getFollowing(type,page)
   {
     $('#following-list').val('');
     getUserCustomFields(userId, function (result)
@@ -602,14 +621,50 @@
           if (cf.Name == 'following_items' && cf.Code.startsWith(customFieldPrefix)) {
             var followingItems = cf.Values[0];
             console.log(`following items ${followingItems}`)
-            if (followingItems) {
-              $('#item-following-list').val(followingItems);
-              itemFollowingList = $('#item-following-list').val().split(',');
-              itemFollowingList.includes(itemGuid) ? ($('#follow').attr('status', 'following'), $('#follow').text("Following")) : ( $('#follow').attr('status', 'not-following'),$('#follow').text("Follow") );
+
+            if (page == 'settings') {  //retrieve following in user settings
+              var item_list = followingItems.split(',');
+              item_list = item_list.filter(function (v) { return v.length > 5 || v != v });
+                console.log(`items ${item_list}`);
+
+                var i = 1;
+                $.each(item_list, function (index, itemId)
+                {
+                  getItemDetails(itemId, function (item)
+                  {
+                      userRow = `<div class="following-row">
+                      <a href="#" class="following-links">
+                          <div class="following-image">
+                              <img src="${item['Media'][0]['MediaUrl']}">
+                          </div>
+                          <div class="following-display-name">
+                             ${item['Name']}
+                          </div>
+                      </a>
+                      
+                      <div class="following-actions">
+                          <a class="following-button" href="#">Following</a>
+                      </div>
+                  </div>`
+                    
+                      $('#following_items').prepend(userRow);
+                   
+                  })
+      
+                  // $('#company').append(options); 
+                })
             } else {
-              $('#follow').attr('status', 'not-following')
-              $('#follow').text("Follow")
+              if (followingItems) {
+                $('#item-following-list').val(followingItems);
+                itemFollowingList = $('#item-following-list').val().split(',');
+                itemFollowingList.includes(itemGuid) ? ($('#follow').attr('status', 'following'), $('#follow').text("Following"), $('#follow').addClass('follow')) : ( $('#follow').attr('status', 'not-following'),$('#follow').text("Follow"),$('#follow').removeClass('follow') );
+              } else {
+                $('#follow').attr('status', 'not-following')
+                $('#follow').text("Follow")
+              }
             }
+
+            
           }
           
         } else {
@@ -617,8 +672,44 @@
             var currentFollowing = cf.Values[0];
             console.log(`following ${currentFollowing}`)
             if (currentFollowing) {
-              $('#following-list').val(currentFollowing);
-              followingList = $('#following-list').val().split(',');
+              
+              if (page == 'settings') {  //retrieve following in user settings
+                var following_list = currentFollowing.split(',')
+                following_list = following_list.filter(function (v) { return v.length > 5 || v != v });
+                  console.log(`users ${following_list}`);
+  
+                  var i = 1;
+                  $.each(following_list, function (index, userId)
+                  {
+                    getUserDetails(userId, function (user)
+                    {
+                        userRow = `<div class="following-row">
+                        <a href="#" class="following-links">
+                            <div class="following-image">
+                                <img src="${user['Media'][0]['MediaUrl']}">
+                            </div>
+                            <div class="following-display-name">
+                               ${user['DisplayName']}
+                            </div>
+                        </a>
+                        
+                        <div class="following-actions">
+                            <a class="following-button" href="#">Following</a>
+                        </div>
+                    </div>`
+                      
+                        $('#following_users').prepend(userRow);
+                      i++;
+                    })
+        
+                    // $('#company').append(options); 
+                  })
+              }
+
+              else {
+                $('#following-list').val(currentFollowing);
+                followingList = $('#following-list').val().split(',');
+              }
               
             }
           }
@@ -643,7 +734,7 @@
            if (currentFollowers) {
              $('#followers-list').val(currentFollowers);
              followerList = $('#followers-list').val().split(',');
-             followerList.includes(userId) ? ($('#follow').attr('status', 'following'), $('#follow').text("Following")) : ( $('#follow').attr('status', 'not-following'),$('#follow').text("Follow") );
+             followerList.includes(userId) ? ($('#follow').attr('status', 'following'), $('#follow').text("Following"),$('#follow').addClass('follow')) : ( $('#follow').attr('status', 'not-following'),$('#follow').text("Follow"),$('#follow').removeClass('follow') );
            } else {
              $('#follow').attr('status', 'not-following')
              $('#follow').text("Follow")
@@ -656,7 +747,7 @@
   function appendFollowButton(page)
   {
    
-    let storeFrontButton = `<div class="following-button-con"><a class="following-button follow" id="follow" href="#" status="not-following">Follow</a></div>`
+    let storeFrontButton = `<div class="following-button-con"><a class="following-button" id="follow" href="#" status="not-following">Follow</a></div>`
     let itemDetailButton = `<div class="following-button-con"><a class="following-button" href="#" id="follow" status="not-following">Follow</a></div>`
 
     
@@ -666,7 +757,7 @@
 
     page == 'item' ? ($('.item-star').append(itemDetailButton), $('body').append(followersDivItemDetails)) : ($('.store-rating').before(storeFrontButton), $('body').append(followersDivStoreFront)) ;
     getFollowers();
-  
+
   }
   
  let checkIfFollowAllowed = async (type) =>
@@ -713,7 +804,7 @@
    }
    
   
-  }
+ }
   
   $(document).ready(function ()
   {
@@ -744,6 +835,7 @@
         })
        
         getFollowing('users');
+       
 
         $(document).on("click", "#follow", function ()
         {
@@ -799,7 +891,7 @@
               : [...itemFollowingList, itemGuid];
           
             saveItemCustomFields(allItems, itemGuid);
-            $('#follow-item').attr('status', 'not-following')
+           // $('#follow').attr('status', 'not-following')
             //$('#follow').attr('status', 'not-following')
           } else {
             saveItemCustomFields(itemGuid, userId);
@@ -809,77 +901,237 @@
       }
     }
 
-    // if (pathname.indexOf('/user/marketplace/seller-settings') > -1 || pathname.indexOf('/user/marketplace/be-seller') > -1) {
-    if (pathname.indexOf('/user/marketplace/user-settings') > -1 || pathname.indexOf('/user/marketplace/seller-settings') > -1 || pathname.indexOf('/user/marketplace/be-seller') > -1 ) {
-     
-     
-      loadCustomFields(userId, 'settings')
-
-      getUserDetails($('#subAccountUserGuid').val(), function (result)
-        {
-        $('#input-sub-firstName').val(result.FirstName);
-        $('#input-sub-lastName').val(result.LastName);
-        $('#notification-sub-email').val(result.Email);
-        $('#input-sub-contactNumber').val(result.PhoneNumber  != null ? result.PhoneNumber : '');
-        })
+    //merchant settings
+    if (pathname.indexOf('/user/marketplace/seller-settings') > -1 || pathname.indexOf('/user/marketplace/be-seller') > -1) {
       
-      $(document).on("click", "#sub-settings_save", function ()
+      //add new tab for following - followers
+      var followingTab = `<li><a href="#following" aria-expanded="true" id ="following-tab"> <span> FOLLOWING </span></a> </li>`
+      var followersTab = `<li><a href="#followers" aria-expanded="true" id ="followers-tab"> <span>  FOLLOWERS </span></a> </li>`
+     
+      $('#setting-tab').append(followingTab, followersTab);
+
+      // add the tab contents
+      var groupName;
+      getMarketplaceCustomFields(function (result)
       {
-        saveSubAccountDetails($('#subAccountUserGuid').val(), $('#input-sub-firstName').val(), $('#input-sub-lastName').val(), $('#input-sub-contactNumber').val(), $('#notification-sub-email').val());
-      })
-     
-  
-      jQuery("#new-profile-tab").click(function(){
-      
-        $(this).attr("data-toggle", "tab")
-   
-      });
-
-      jQuery("#following-tab").click(function(){
-      
-        $(this).attr("data-toggle", "tab")
-   
-      });
-
-     
-}
-
-   
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // $(document).on("click", "#follow-item", function ()
-    // {
-      
-    //   //if ($('#subAccountUserGuid').length) {
-    //     var allItems;
-    //     if (itemList.length) {
-    //     //unfollowing
-    //       allItems = $('#follow-item').attr('status') == 'following'  ? itemList.filter(function (value, index, arr) { return value != $('#itemGuid').val(); }) 
-    //       : [...itemList, $('#itemGuid').val()];
-           
-    //       console.log(allItems);
-
-    //       saveItemCustomFields(allItems, userId);
-    //       $('#follow-item').attr('status', 'not-following')
+        $.each(result, function (index, cf)
+        {
+          if (cf.Name == 'group_name' && cf.Code.startsWith(customFieldPrefix)) {
+            groupName = cf.Values[0];
+            $('#group-name').text(groupName);
+          }
           
-    //     } else {
-         
-    //       saveItemCustomFields($('#itemGuid').val(), userId);
-         
-    //     }
-        
-    // //  }
-    // });
+        })
+      })
 
+      var followingContents = `<div class="tab-pane fade" id="following">
+      <div class="container">
+          <div class="following-plug-container">
+              <ul class="nav nav-tabs text-center" id="following_group-tab">
+                  <li class="active">
+                      <a data-toggle="tab" href="#following_group_name" aria-expanded="true">
+                          <span id ="group-name">
+                           <group name>
+                          </span>
+                      </a>
+                  </li>
+                  <li class="">
+                      <a data-toggle="tab" href="#following_users" aria-expanded="true">
+                          <span>
+                              USERS
+                          </span>
+                      </a>
+                  </li>
+                  <li class="">
+                      <a data-toggle="tab" href="#following_items" aria-expanded="true">
+                          <span>
+                              ITEMS
+                          </span>
+                      </a>
+                  </li>
+
+              </ul>
+              <div class="tab-pane fade active in" id="following_group_name">
+                
+                  <div class="sellritemlst-btm-pgnav">
+                      <ul class="pagination">
+                          <li> <a href="#" aria-label="Previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                          <li class="active"><a href="#">1</a></li>
+                          <li><a href="#">2</a></li>
+                          <li><a href="#">3</a></li>
+                          <li><a href="#">4</a></li>
+                          <li><a href="#">5</a></li>
+                          <li> <a href="#" aria-label="Next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
+                      </ul>
+                  </div>
+              </div>
+              <div class="tab-pane fade" id="following_users">
+                 
+                  <div class="sellritemlst-btm-pgnav">
+                      <ul class="pagination">
+                          <li> <a href="#" aria-label="Previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                          <li class="active"><a href="#">1</a></li>
+                          <li><a href="#">2</a></li>
+                          <li><a href="#">3</a></li>
+                          <li><a href="#">4</a></li>
+                          <li><a href="#">5</a></li>
+                          <li> <a href="#" aria-label="Next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
+                      </ul>
+                  </div>
+              </div>
+              <div class="tab-pane fade" id="following_items">
+                  <div class="following-row">
+                      <a href="#" class="following-links">
+                          <div class="following-image">
+                              <img src="images/gray-image.svg">
+                          </div>
+                          <div class="following-display-name">
+                              Users display name when its too l...
+                          </div>
+                      </a>
+                      <div class="following-actions">
+                          <a class="following-button" href="#">Following</a>
+                      </div>
+                  </div>
+                  <div class="following-row">
+                      <a href="#" class="following-links">
+                          <div class="following-image">
+                              <img src="images/gray-image.svg">
+                          </div>
+                          <div class="following-display-name">
+                              Users display name when its too l...
+                          </div>
+                      </a>
+                      <div class="following-actions">
+                          <a class="following-button" href="#">Following</a>
+                      </div>
+                  </div>
+                  <div class="following-row">
+                      <a href="#" class="following-links">
+                          <div class="following-image">
+                              <img src="images/gray-image.svg">
+                          </div>
+                          <div class="following-display-name">
+                              Users display name when its too l...
+                          </div>
+                      </a>
+                      <div class="following-actions">
+                          <a class="following-button" href="#">Following</a>
+                      </div>
+                  </div>
+                  <div class="sellritemlst-btm-pgnav">
+                      <ul class="pagination">
+                          <li> <a href="#" aria-label="Previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                          <li class="active"><a href="#">1</a></li>
+                          <li><a href="#">2</a></li>
+                          <li><a href="#">3</a></li>
+                          <li><a href="#">4</a></li>
+                          <li><a href="#">5</a></li>
+                          <li> <a href="#" aria-label="Next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
+                      </ul>
+                  </div>
+              </div>
+
+
+          </div>
+      </div>
+      </div>`
+
+      var followerContents =  `<div class="tab-pane fade" id="followers">
+      <div class="container">
+          <div class="following-plug-container">
+
+              <div class="tab-pane fade active in">
+                  <div class="following-row">
+                      <div class="following-image">
+                          <img src="images/gray-image.svg">
+                      </div>
+                      <div class="following-display-name">
+                          Group A
+                      </div>
+
+                  </div>
+                  <div class="following-row">
+                      <div class="following-image">
+                          <img src="images/gray-image.svg">
+                      </div>
+                      <div class="following-display-name">
+                          Group B
+                      </div>
+
+                  </div>
+                  <div class="following-row">
+                      <div class="following-image">
+                          <img src="images/gray-image.svg">
+                      </div>
+                      <div class="following-display-name">
+                          Group B
+                      </div>
+
+                  </div>
+                  <div class="sellritemlst-btm-pgnav">
+                      <ul class="pagination">
+                          <li> <a href="#" aria-label="Previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                          <li class="active"><a href="#">1</a></li>
+                          <li><a href="#">2</a></li>
+                          <li><a href="#">3</a></li>
+                          <li><a href="#">4</a></li>
+                          <li><a href="#">5</a></li>
+                          <li> <a href="#" aria-label="Next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
+                      </ul>
+                  </div>
+              </div>
+
+
+
+
+          </div>
+      </div>
+      </div>`
+
+      $('.tab-content').append(followingContents, followerContents);
+
+      getFollowing('user', 'settings');
+      getFollowing('items','settings')
+
+
+      $("#following-tab").click(function(){
+      
+        $(this).attr("data-toggle", "tab")
+   
+      });
+      
+      $("#followers-tab").click(function(){
+      
+        $(this).attr("data-toggle", "tab")
+   
+      });
+
+       ////Following Script
+        $(".following-button").hover(
+          function () {
+              $(this).text("Remove").addClass('remove');
+          },
+          function () {
+              $(this).text("Following").removeClass("remove");
+          }
+      );
+
+
+
+    }
+    // buyer settings
+    if (pathname.indexOf('/user/marketplace/user-settings') > -1) {
+      
+      
+
+     
+    }
+
+   
+
+    
+    
 
   });
 })();
