@@ -9,6 +9,7 @@ $user_id = $content['user-id'];
 $merchant_id = $content['merchant-id'];
 $following_list = $content['following-id'];
 $user_type = $content['user-type'];
+$following_group_list = $content['following-group-list'];
 
 $baseUrl = getMarketplaceBaseUrl();
 $admin_token = getAdminToken();
@@ -62,11 +63,11 @@ $packageCustomFields = callAPI("GET", null, $url, false);
             'CustomFields' => [
                 [
                     'Code' => $following_group,
-                    'Values' => is_array($following_list) ? [implode(",", $following_list)] : [$following_list] ,
+                    'Values' => is_array($following_group_list) ? [implode(",", $following_group_list)] : [$following_group_list] ,
                 ],
             ],
         ];
-        echo json_encode(['date' => $data]);
+        echo json_encode(['companylist' => $data]);
 
         $url = $baseUrl . '/api/v2/users/' . $user_id ;
         echo json_encode(['url' => $url]);
@@ -83,7 +84,7 @@ $packageCustomFields = callAPI("GET", null, $url, false);
                 ],
             ],
         ];
-        echo json_encode(['date' => $data]);
+        echo json_encode(['followinglist' => $data]);
 
         $url = $baseUrl . '/api/v2/users/' . $user_id ;
         echo json_encode(['url' => $url]);

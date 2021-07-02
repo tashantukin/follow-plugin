@@ -39,14 +39,14 @@ function getMarketplaceCustomFields(callback){
   waitForElement("#no-more-tables", function ()
   {
   
-    var status = `<th data-column="22" tabindex="0" scope="col" role="columnheader" aria-disabled="false" aria-controls="no-more-tables" unselectable="on" aria-sort="none" aria-label="User Type: No sort applied, activate to apply an ascending sort" style="user-select: none;"><div class="tablesorter-header-inner">${groupname}</div></th>`;
-    $('#no-more-tables thead tr th:nth-child(21)').after(status);
-    $('#no-more-tables thead tr th:nth-child(23)').attr('data-column', '23');
+    var status = `<th data-column="9" tabindex="0" scope="col" role="columnheader" aria-disabled="false" aria-controls="no-more-tables" unselectable="on" aria-sort="none" aria-label="User Type: No sort applied, activate to apply an ascending sort" style="user-select: none;"><div class="tablesorter-header-inner">${groupname}</div></th>`;
+    $('#no-more-tables thead tr th:nth-child(8)').after(status);
+    $('#no-more-tables thead tr th:nth-child(9)').attr('data-column', '9');
     $("tbody tr:not(.loaded)").each(function ()
     {
         var userguid = $(this).attr('data-guid');
         var newTd = `<td id='company-status'></td>`;
-         $('td:nth-child(21)', $(this)).after(newTd);
+         $('td:nth-child(8)', $(this)).after(newTd);
       
       //if ($(this).find('.onoffswitch-checkbox').attr('data-merchant') == "true") {
         $('#company-status', $(this)).append(`<div class="onoffswitch"><input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id=${userguid} data-id=${userguid}

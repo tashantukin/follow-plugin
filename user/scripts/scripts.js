@@ -14,6 +14,7 @@
   var followerList = [];
   var followingList = [];
   var itemFollowingList = [];
+  var followingGroupList = [];
   var itemList = [];
   var currentUser = $('#subAccountUserGuid').length ? $('#subAccountUserGuid').val() : userId;
   var currentMerchant = $('#storefrontMerchantGuid').length ? $('#storefrontMerchantGuid').val() : $('#merchantGuid').val();
@@ -141,9 +142,9 @@
     });
   }
 
-  function saveCustomFields(followersList, merchantId, followingList,type)
+  function saveCustomFields(followersList, merchantId, followingList,type, followingListGroup)
 	{
-		var data  = { 'followers-id' : followersList, 'merchant-id' : merchantId, 'user-id' : userId, 'following-id' : followingList, 'user-type' : type } 
+		var data  = { 'followers-id' : followersList, 'merchant-id' : merchantId, 'user-id' : userId, 'following-id' : followingList, 'user-type' : type, 'following-group-list' : followingListGroup } 
 		//console.log(data);
 		var apiUrl = packagePath + '/save_followers.php';
 		$.ajax({
@@ -746,7 +747,7 @@
                         </div>
                     </div>`
                       
-                        $('#following_group').prepend(userRow);
+                        $('#following_group_name').prepend(userRow);
                       i++;
                     })
         
@@ -755,8 +756,8 @@
               }
 
               else {
-                $('#following-list').val(currentFollowing);
-                followingList = $('#following-list').val().split(',');
+                $('#following-group-list').val(currentFollowingGroup);
+                followingGroupList = $('#following-group-list').val().split(',');
               }
               
             }
@@ -861,25 +862,38 @@
     
     if (pathname.indexOf('user/merchantaccount') >= 0) {
 
-      if (!$('.register-link').length || currentMerchant != userId) { // only for registered users
+      if (!$('.register-link').length && currentMerchant != userId) { // only for registered users
 
         var followingDivStoreFront = `<input type="hidden" id="following-list" >`;
         $('body').append(followingDivStoreFront);
+
+        //for following groups
+        var followingGroupDivStoreFront = `<input type="hidden" id="following-group-list" >`;
+        $('body').append(followingGroupDivStoreFront);
+
         var userType;
       
-        getUserCustomFields(userId, function (result)
+        getUserCustomFields(currentMerchant, function (result)
         {
-          userType = (!result) || !("company_status" in result) || (result == null) ?  // no cf means not company
-            'user'
-            :
+
+          if ( (!result) || (result == null) ) {
+            userType = 'user';
+          }
+          // userType = !(result) || !("company_status" in result) || (result == null) ?  // no cf means not company
+          //   'user'
+          //   :
+          else {
             $.each(result, function (index, cf)
             {
+              console.log('in each')
               if (cf.Name == 'company_status' && cf.Code.startsWith(customFieldPrefix)) {
                 var companyStatus = cf.Values[0];
                 userType = companyStatus == 'true' ? 'company' : 'user'
                 
               }
             })
+          }
+           
           
           checkIfFollowAllowed(userType);
         })
@@ -891,11 +905,13 @@
           console.log('follow click');
           var allFollowers;
           var allFollowing;
+          var allFollowingGroups;
           var userType_ = isCompany == 1 ? 'company' : 'user';
-          if (followerList.length || followingList.length) {
+          if (followerList.length || followingList.length || followingGroupList.length) {
             console.log('if');
             followerList = followerList.filter(function (value) { return value.length > 5 })
             followingList = followingList.filter(function (value) { return value.length > 5 })
+            followingGroupList = followingGroupList.filter(function (value) { return value.length > 5 })
             //unfollowing
             console.log(JSON.stringify(followerList));
             allFollowers = $('#follow').attr('status') == 'following' ? followerList.filter(function (value) { return value !== userId; })
@@ -904,13 +920,16 @@
             allFollowing = $('#follow').attr('status') == 'following' ? followingList.filter(function (value) { return value !== merchantId; })
               : [...followingList, merchantId];
             
-           
-            saveCustomFields(allFollowers, currentMerchant, allFollowing, userType_);
-            //$('#follow').attr('status', 'not-following')
+            allFollowingGroups = $('#follow').attr('status') == 'following' ? followingGroupList.filter(function (value) { return value !== merchantId; })
+            : [...followingGroupList, merchantId];
+            
+          
+            saveCustomFields(allFollowers, currentMerchant, allFollowing, userType_, allFollowingGroups);
+            
           } else {
             console.log('else');
-            saveCustomFields(currentUser, currentMerchant, merchantId,userType_);
-            // $('#follow').attr('status', 'following')
+            saveCustomFields(currentUser, currentMerchant, merchantId, userType_, merchantId);
+            
           }
          
 
@@ -953,7 +972,7 @@
     }
 
     //merchant settings
-    if (pathname.indexOf('/user/marketplace/seller-settings') > -1 || pathname.indexOf('/user/marketplace/be-seller') > -1) {
+    if (pathname.indexOf('/user/marketplace/seller-settings') > -1 || pathname.indexOf('/user/marketplace/be-seller') > -1 || pathname.indexOf('/user/marketplace/user-settings') > -1) {
       
       //add new tab for following - followers
       var followingTab = `<li><a href="#following" aria-expanded="true" id ="following-tab"> <span> FOLLOWING </span></a> </li>`
@@ -1132,12 +1151,12 @@
 
     }
     // buyer settings
-    if (pathname.indexOf('/user/marketplace/user-settings') > -1) {
+    // if (pathname.indexOf('/user/marketplace/user-settings') > -1) {
       
       
 
-     
-    }
+  
+    // }
 
    
 
