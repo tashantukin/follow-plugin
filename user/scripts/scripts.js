@@ -23,6 +23,7 @@
   var isCompanyFollowAllowed;
   var isUserFollowAllowed;
   var isItemFollowAllowed;
+  var isCompany;
   
 
   const distinct = (value, index, self) =>
@@ -140,9 +141,9 @@
     });
   }
 
-  function saveCustomFields(followersList, merchantId, followingList)
+  function saveCustomFields(followersList, merchantId, followingList,type)
 	{
-		var data  = { 'followers-id' : followersList, 'merchant-id' : merchantId, 'user-id' : userId, 'following-id' : followingList } 
+		var data  = { 'followers-id' : followersList, 'merchant-id' : merchantId, 'user-id' : userId, 'following-id' : followingList, 'user-type' : type } 
 		//console.log(data);
 		var apiUrl = packagePath + '/save_followers.php';
 		$.ajax({
@@ -154,7 +155,7 @@
 			{
         console.log(response);
         getFollowers();
-        getFollowing('users');
+        getFollowing('users','storefront');
 
 			},
 			error: function (jqXHR, status, err)
@@ -713,6 +714,54 @@
               
             }
           }
+
+          //for following group lists
+          if (cf.Name == 'following_group' && cf.Code.startsWith(customFieldPrefix)) {
+            var currentFollowingGroup = cf.Values[0];
+            console.log(`following ${currentFollowingGroup}`)
+            if (currentFollowingGroup ) {
+              
+              if (page == 'settings') {  //retrieve following in user settings
+                var following_list_group = currentFollowingGroup.split(',')
+                following_list_group = following_list_group.filter(function (v) { return v.length > 5 || v != v });
+                  console.log(`users ${following_list_group}`);
+  
+                  var i = 1;
+                  $.each(following_list_group, function (index, userId)
+                  {
+                    getUserDetails(userId, function (user)
+                    {
+                        userRow = `<div class="following-row">
+                        <a href="#" class="following-links">
+                            <div class="following-image">
+                                <img src="${user['Media'][0]['MediaUrl']}">
+                            </div>
+                            <div class="following-display-name">
+                               ${user['DisplayName']}
+                            </div>
+                        </a>
+                        
+                        <div class="following-actions">
+                            <a class="following-button" href="#">Following</a>
+                        </div>
+                    </div>`
+                      
+                        $('#following_group').prepend(userRow);
+                      i++;
+                    })
+        
+                    // $('#company').append(options); 
+                  })
+              }
+
+              else {
+                $('#following-list').val(currentFollowing);
+                followingList = $('#following-list').val().split(',');
+              }
+              
+            }
+          }  
+
         }
        
       })
@@ -770,6 +819,7 @@
       {
         var status;
         if (type == 'company') {
+          isCompany = 1;
           if (cf.Name == 'allow_company_follow' && cf.Code.startsWith(customFieldPrefix)) {
             var isCompanyFollowAllowed = cf.Values[0];
             status = isCompanyFollowAllowed == 'true' ? appendFollowButton('user') : '';
@@ -836,12 +886,12 @@
        
         getFollowing('users');
        
-
         $(document).on("click", "#follow", function ()
         {
           console.log('follow click');
           var allFollowers;
           var allFollowing;
+          var userType_ = isCompany == 1 ? 'company' : 'user';
           if (followerList.length || followingList.length) {
             console.log('if');
             followerList = followerList.filter(function (value) { return value.length > 5 })
@@ -854,11 +904,12 @@
             allFollowing = $('#follow').attr('status') == 'following' ? followingList.filter(function (value) { return value !== merchantId; })
               : [...followingList, merchantId];
             
-            saveCustomFields(allFollowers, currentMerchant, allFollowing);
+           
+            saveCustomFields(allFollowers, currentMerchant, allFollowing, userType_);
             //$('#follow').attr('status', 'not-following')
           } else {
             console.log('else');
-            saveCustomFields(currentUser, currentMerchant, merchantId);
+            saveCustomFields(currentUser, currentMerchant, merchantId,userType_);
             // $('#follow').attr('status', 'following')
           }
          
@@ -980,45 +1031,7 @@
                   </div>
               </div>
               <div class="tab-pane fade" id="following_items">
-                  <div class="following-row">
-                      <a href="#" class="following-links">
-                          <div class="following-image">
-                              <img src="images/gray-image.svg">
-                          </div>
-                          <div class="following-display-name">
-                              Users display name when its too l...
-                          </div>
-                      </a>
-                      <div class="following-actions">
-                          <a class="following-button" href="#">Following</a>
-                      </div>
-                  </div>
-                  <div class="following-row">
-                      <a href="#" class="following-links">
-                          <div class="following-image">
-                              <img src="images/gray-image.svg">
-                          </div>
-                          <div class="following-display-name">
-                              Users display name when its too l...
-                          </div>
-                      </a>
-                      <div class="following-actions">
-                          <a class="following-button" href="#">Following</a>
-                      </div>
-                  </div>
-                  <div class="following-row">
-                      <a href="#" class="following-links">
-                          <div class="following-image">
-                              <img src="images/gray-image.svg">
-                          </div>
-                          <div class="following-display-name">
-                              Users display name when its too l...
-                          </div>
-                      </a>
-                      <div class="following-actions">
-                          <a class="following-button" href="#">Following</a>
-                      </div>
-                  </div>
+                  
                   <div class="sellritemlst-btm-pgnav">
                       <ul class="pagination">
                           <li> <a href="#" aria-label="Previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
@@ -1031,8 +1044,6 @@
                       </ul>
                   </div>
               </div>
-
-
           </div>
       </div>
       </div>`

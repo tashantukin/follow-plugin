@@ -8,6 +8,7 @@ $customfield_id = $content['custom-id'];
 $user_id = $content['user-id'];
 $merchant_id = $content['merchant-id'];
 $following_list = $content['following-id'];
+$user_type = $content['user-type'];
 
 $baseUrl = getMarketplaceBaseUrl();
 $admin_token = getAdminToken();
@@ -30,8 +31,15 @@ $packageCustomFields = callAPI("GET", null, $url, false);
         if ($cf['Name'] == 'following_users' && substr($cf['Code'], 0, strlen($customFieldPrefix)) == $customFieldPrefix) {
             $following_code = $cf['Code'];
          }
+
+
+         if ($cf['Name'] == 'following_group' && substr($cf['Code'], 0, strlen($customFieldPrefix)) == $customFieldPrefix) {
+            $following_group = $cf['Code'];
+         }
+
       
     }
+
         $data = [
             'CustomFields' => [
                 [
@@ -48,21 +56,41 @@ $packageCustomFields = callAPI("GET", null, $url, false);
     $result = callAPI("PUT", $admin_token['access_token'], $url, $data);
     echo json_encode(['result' => $result]);
 
-    //save to users following list
-    $data = [
-        'CustomFields' => [
-            [
-                'Code' => $following_code,
-                'Values' => is_array($following_list) ? [implode(",", $following_list)] : [$following_list] ,
-            ],
-        ],
-    ];
-    echo json_encode(['date' => $data]);
 
-    $url = $baseUrl . '/api/v2/users/' . $user_id ;
-    echo json_encode(['url' => $url]);
-    $result = callAPI("PUT", $admin_token['access_token'], $url, $data);
-    echo json_encode(['result' => $result]);
+    if ($user_type == 'company'){  // save to following_group
+        $data = [
+            'CustomFields' => [
+                [
+                    'Code' => $following_group,
+                    'Values' => is_array($following_list) ? [implode(",", $following_list)] : [$following_list] ,
+                ],
+            ],
+        ];
+        echo json_encode(['date' => $data]);
+
+        $url = $baseUrl . '/api/v2/users/' . $user_id ;
+        echo json_encode(['url' => $url]);
+        $result = callAPI("PUT", $admin_token['access_token'], $url, $data);
+        echo json_encode(['result' => $result]);
+        
+    }else {
+        //save to users following list
+        $data = [
+            'CustomFields' => [
+                [
+                    'Code' => $following_code,
+                    'Values' => is_array($following_list) ? [implode(",", $following_list)] : [$following_list] ,
+                ],
+            ],
+        ];
+        echo json_encode(['date' => $data]);
+
+        $url = $baseUrl . '/api/v2/users/' . $user_id ;
+        echo json_encode(['url' => $url]);
+        $result = callAPI("PUT", $admin_token['access_token'], $url, $data);
+        echo json_encode(['result' => $result]);
+    }
+    
 
 //}
 
