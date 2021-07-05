@@ -25,7 +25,18 @@
   var isUserFollowAllowed;
   var isItemFollowAllowed;
   var isCompany;
+  var buyerId;
   
+
+  var token = getCookie('webapitoken');
+
+    function getCookie(name){
+      var value = '; ' + document.cookie;
+      var parts = value.split('; ' + name + '=');
+      if (parts.length === 2) {
+          return parts.pop().split(';').shift();
+      }
+    }
 
   const distinct = (value, index, self) =>
   {
@@ -40,6 +51,46 @@
         waitForElement(elementPath, callBack);
       }
     }, 500);
+  }
+
+  function getOrderInfo(orderId)
+  {
+        $.ajax({
+          url: `/api/v2/users/${userId}/orders/${orderId}`,
+          method: 'GET',
+          beforeSend: function (xhr)
+          {
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+          },
+          contentType: 'application/json',
+         // data: JSON.stringify(files),
+          success: function (response){
+            // var orders = $.parseJSON(response);
+            buyerId = response['ConsumerDetail']['ID'];
+            console.log(buyerId);
+            var userType;
+              getUserCustomFields(buyerId, function (result)
+              {
+              
+                if ((!result) || (result == null) || !('company_status' in result)) {
+                  userType = 'user';
+                }
+                else {
+                  $.each(result, function (index, cf)
+                  {
+                    console.log('in each')
+                    if (cf.Name == 'company_status' && cf.Code.startsWith(customFieldPrefix)) {
+                      var companyStatus = cf.Values[0];
+                      userType = companyStatus == 'true' ? 'company' : 'user'
+                      
+                    }
+                  })
+                }
+                checkIfFollowAllowed(userType,'orders');
+              })
+
+            },
+          });
   }
 
   function getItemInfo(itemId, channelId,token) {
@@ -88,7 +139,7 @@
         }
     });
   }
- async function  getUserCustomFields(merchantGuid,callback) {
+function  getUserCustomFields(merchantGuid,callback) {
     var apiUrl = `/api/v2/users/${merchantGuid}`;
 
     console.log(apiUrl);
@@ -142,7 +193,7 @@
     });
   }
 
-  function saveCustomFields(followersList, merchantId, followingList,type, followingListGroup)
+  function saveCustomFields(followersList, merchantId, followingList,type, followingListGroup,page)
 	{
 		var data  = { 'followers-id' : followersList, 'merchant-id' : merchantId, 'user-id' : userId, 'following-id' : followingList, 'user-type' : type, 'following-group-list' : followingListGroup } 
 		//console.log(data);
@@ -153,10 +204,17 @@
 			contentType: 'application/json',
 			data: JSON.stringify(data),
 			success: function (response)
-			{
-        console.log(response);
-        getFollowers();
-        getFollowing('users','storefront');
+      {
+        
+        if (page == 'orders') {
+          getFollowers('orders', buyerId);
+         
+        } else {
+          console.log(response);
+          getFollowers('sf', merchantId);
+         
+        }
+        getFollowing('users');
 
 			},
 			error: function (jqXHR, status, err)
@@ -769,10 +827,10 @@
     })
   }
 
-  function getFollowers()
+  function getFollowers(page, userToFollow)
   {
     $('#followers-list').val('');
-    getUserCustomFields(merchantId, function (result)
+    getUserCustomFields(userToFollow, function (result)
     {
      if (result) { 
      //check following users
@@ -781,14 +839,45 @@
          if (cf.Name == 'followers_list' && cf.Code.startsWith(customFieldPrefix)) {
            var currentFollowers = cf.Values[0];
            console.log(`followers ${currentFollowers}`)
-           if (currentFollowers) {
-             $('#followers-list').val(currentFollowers);
-             followerList = $('#followers-list').val().split(',');
-             followerList.includes(userId) ? ($('#follow').attr('status', 'following'), $('#follow').text("Following"),$('#follow').addClass('follow')) : ( $('#follow').attr('status', 'not-following'),$('#follow').text("Follow"),$('#follow').removeClass('follow') );
-           } else {
-             $('#follow').attr('status', 'not-following')
-             $('#follow').text("Follow")
-           }
+
+
+           if (page == 'settings') {  //retrieve followers in user settings
+            var follower_list = currentFollowers.split(',')
+            follower_list = follower_list.filter(function (v) { return v.length > 5 || v != v });
+              console.log(`users ${follower_list}`);
+
+              var i = 1;
+              $.each(follower_list, function (index, userId)
+              {
+                getUserDetails(userId, function (user)
+                {
+                  userRow = `<div class="following-row">
+                    <div class="following-image">
+                    <img src="${user['Media'][0]['MediaUrl']}">
+                    </div>
+                    <div class="following-display-name">
+                    ${user['DisplayName']}
+                    </div>
+                  </div>`
+                  
+                    $('#followers .tab-pane').prepend(userRow);
+                  i++;
+                })
+              })
+            }
+           
+
+           else {
+            if (currentFollowers) {
+              $('#followers-list').val(currentFollowers);
+              followerList = $('#followers-list').val().split(',');
+              followerList.includes(userId) ? ($('#follow').attr('status', 'following'), $('#follow').text("Following"),$('#follow').addClass('follow')) : ( $('#follow').attr('status', 'not-following'),$('#follow').text("Follow"),$('#follow').removeClass('follow') );
+            } else {
+              $('#follow').attr('status', 'not-following')
+              $('#follow').text("Follow")
+              $('#follow').removeClass('follow');
+            }
+          } 
          }
        })
      }
@@ -799,18 +888,28 @@
    
     let storeFrontButton = `<div class="following-button-con"><a class="following-button" id="follow" href="#" status="not-following">Follow</a></div>`
     let itemDetailButton = `<div class="following-button-con"><a class="following-button" href="#" id="follow" status="not-following">Follow</a></div>`
-
+    var followdiv = `<div class="ordr-dtls-buyer-infoind"><div class="following-button-con"><a class="following-button" href="#" status="not-following" id="follow">Following</a></div></div>`;
+   
     
     var followersDivStoreFront = `<input type="hidden" id="followers-list" >`;
     var followersDivItemDetails = `<input type="hidden" id="followers-list" >`;
 
+    if (page != 'orders') {
+      page == 'item' ? ($('.item-star').append(itemDetailButton), $('body').append(followersDivItemDetails)) : ($('.store-rating').before(storeFrontButton), $('body').append(followersDivStoreFront)) ;
+      getFollowers('storefront', merchantId);
+      getFollowing('users');
+    } else {
+      $('.buyer-email').parents('.ordr-dtls-buyer-info .ordr-dtls-buyer-infoind:nth-child(2)').before(followdiv);
+      $('body').append(followersDivStoreFront);
+      getFollowers('orders', buyerId);
+      getFollowing('users');
 
-    page == 'item' ? ($('.item-star').append(itemDetailButton), $('body').append(followersDivItemDetails)) : ($('.store-rating').before(storeFrontButton), $('body').append(followersDivStoreFront)) ;
-    getFollowers();
+    }
+    
 
   }
   
- let checkIfFollowAllowed = async (type) =>
+ let checkIfFollowAllowed = async (type,page) =>
   {
     console.log(`user ${type}`)
      getMarketplaceCustomFields(function (result)
@@ -827,7 +926,21 @@
             return status;
           }
         }
-        if (type == 'user') {
+
+
+        if (type == 'user' && page == 'orders') {
+          console.log('orders');
+           if (cf.Name == 'allow_users_follow' && cf.Code.startsWith(customFieldPrefix)) {
+             var isUserFollowAllowed = cf.Values[0];
+             console.log('here')
+             status = isUserFollowAllowed == 'true' ? appendFollowButton('orders') : '';
+             console.log(status);
+             return status;
+           }
+        }
+
+
+        if (type == 'user' && page != 'orders') {
            if (cf.Name == 'allow_users_follow' && cf.Code.startsWith(customFieldPrefix)) {
              var isUserFollowAllowed = cf.Values[0];
              console.log('here')
@@ -836,6 +949,12 @@
              return status;
            }
         }
+
+
+       
+
+
+
         if (type == 'item') {
             if (cf.Name == 'allow_items_follow' && cf.Code.startsWith(customFieldPrefix)) {
               var isItemFollowAllowed = cf.Values[0];
@@ -924,11 +1043,11 @@
             : [...followingGroupList, merchantId];
             
           
-            saveCustomFields(allFollowers, currentMerchant, allFollowing, userType_, allFollowingGroups);
+            saveCustomFields(allFollowers, currentMerchant, allFollowing, userType_, allFollowingGroups,'sf');
             
           } else {
             console.log('else');
-            saveCustomFields(currentUser, currentMerchant, merchantId, userType_, merchantId);
+            saveCustomFields(currentUser, currentMerchant, merchantId, userType_, merchantId,'sf');
             
           }
          
@@ -1072,33 +1191,7 @@
           <div class="following-plug-container">
 
               <div class="tab-pane fade active in">
-                  <div class="following-row">
-                      <div class="following-image">
-                          <img src="images/gray-image.svg">
-                      </div>
-                      <div class="following-display-name">
-                          Group A
-                      </div>
-
-                  </div>
-                  <div class="following-row">
-                      <div class="following-image">
-                          <img src="images/gray-image.svg">
-                      </div>
-                      <div class="following-display-name">
-                          Group B
-                      </div>
-
-                  </div>
-                  <div class="following-row">
-                      <div class="following-image">
-                          <img src="images/gray-image.svg">
-                      </div>
-                      <div class="following-display-name">
-                          Group B
-                      </div>
-
-                  </div>
+                 
                   <div class="sellritemlst-btm-pgnav">
                       <ul class="pagination">
                           <li> <a href="#" aria-label="Previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
@@ -1122,7 +1215,8 @@
       $('.tab-content').append(followingContents, followerContents);
 
       getFollowing('user', 'settings');
-      getFollowing('items','settings')
+      getFollowing('items', 'settings');
+      getFollowers('settings');
 
 
       $("#following-tab").click(function(){
@@ -1152,11 +1246,65 @@
     }
     // buyer settings
     // if (pathname.indexOf('/user/marketplace/user-settings') > -1) {
-      
-      
+    
+    //merchannt order details
+
+    if (pathname.indexOf('user/manage/order/details') >= 0) {
+
+         //for following groups
+      var followingGroupDiv = `<input type="hidden" id="following-group-list" >`;
+      $('body').append(followingGroupDiv);
+
+      var followingDivStoreFront = `<input type="hidden" id="following-list" >`;
+      $('body').append(followingDivStoreFront);
+
+
+      var userType;
+
+      getOrderInfo($('#orderGuid').val());
+
+      $(document).on("click", "#follow", function ()
+        {
+          console.log('follow click');
+          var allFollowers;
+          var allFollowing;
+          var allFollowingGroups;
+          var userType_ = isCompany == 1 ? 'company' : 'user';
+          if (followerList.length || followingList.length || followingGroupList.length) {
+            console.log('if');
+            followerList = followerList.filter(function (value) { return value.length > 5 })
+            followingList = followingList.filter(function (value) { return value.length > 5 })
+            followingGroupList = followingGroupList.filter(function (value) { return value.length > 5 })
+            //unfollowing
+            console.log(JSON.stringify(followerList));
+            allFollowers = $('#follow').attr('status') == 'following' ? followerList.filter(function (value) { return value !== userId; })
+              : [...followerList, $("#userGuid").val()];
+         
+            allFollowing = $('#follow').attr('status') == 'following' ? followingList.filter(function (value) { return value !== buyerId; })
+              : [...followingList, buyerId];
+            
+            allFollowingGroups = $('#follow').attr('status') == 'following' ? followingGroupList.filter(function (value) { return value !== buyerId; })
+            : [...followingGroupList, buyerId];
+            
+          
+            saveCustomFields(allFollowers, buyerId, allFollowing, userType_, allFollowingGroups,'orders');
+            
+          } else {
+            console.log('else');
+            saveCustomFields(currentUser, buyerId, currentUser, userType_, buyerId, 'orders');
+            
+          }
+         
+
+        });
+
+
 
   
-    // }
+    
+    }
+
+  
 
    
 
