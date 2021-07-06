@@ -1,5 +1,6 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 <link rel="stylesheet" href="css/settings.css">
+<link rel="stylesheet" href="css/templates.css">
 <div class="col-sm-9 main-content">
     <!-- <div class="page-content page-layout">
         <div class="gutter-wrapper">
@@ -78,7 +79,7 @@
     </div> -->
 
     <div class="page-content" id="followers">
-        <div class="gutter-wrapper">
+        <div class="gutter-wrapper" >
             <div class="panel-box">
                 <div class="page-content-top">
                     <div>
@@ -148,10 +149,85 @@
             </div>
 
         </div>
+
+        </div>
         <div class="clearfix"></div>
+
+        <div>
+            <p>Email templates</p>
+          </div>
+          <div class="private-setting-switch">
+            <a href="create_page.php" class="blue-btn">Create New Template</a>
+          </div>
+        </div>
+      </div>
+  <!-- ORDERS -->
+
+  <div class="div" id="app">
+  <div class="panel-box panel-style-ab" >
+        <div class="panel-box-title">
+            <h3>Seller</h3>
+            <div class="pull-right"><a class="panel-toggle" href="javascript:void(0);"><i class="icon icon-toggle"></i></a></div>
+            <div class="clearfix"></div>
+        </div>
+        <div class="panel-box-content">
+            <ul>
+                <li v-for="template in sellerTemplates">
+                    <h5> {{template['title']}}</h5>
+                    <p>{{template['description']}}</p>
+                    <a class="action-edit-template" :href="'edit_content.php?pageid=' + template.Id"  :id="template.Id">Edit</a>
+                </li>
+            </ul>
+        </div>
     </div>
-</div>
+
+    <!-- PAYMENTS -->
+    <div class="panel-box panel-style-ab">
+        <div class="panel-box-title">
+            <h3>Buyer</h3>
+            <div class="pull-right"><a class="panel-toggle" href="javascript:void(0);"><i class="icon icon-toggle"></i></a></div>
+            <div class="clearfix"></div>
+        </div>
+        <div class="panel-box-content">
+            <ul>
+                <li v-for="template in buyerTemplates">
+                    <h5> {{template['title']}}</h5>
+                    <p>{{template['description']}}</p>
+                    <a class="action-edit-template" :href="'edit_content.php?pageid=' + template.Id"  :id="template.Id">Edit</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+ <!-- SHIPPING -->
+ <div class="panel-box panel-style-ab">
+        <div class="panel-box-title">
+            <h3>Items</h3>
+            <div class="pull-right"><a class="panel-toggle" href="javascript:void(0);"><i class="icon icon-toggle"></i></a></div>
+            <div class="clearfix"></div>
+        </div>
+        <div class="panel-box-content">
+            <ul>
+                <li v-for="template in itemsTemplates">
+                    <h5> {{template['title']}}</h5>
+                    <p>{{template['description']}}</p>
+                    <a class="action-edit-template" :href="'edit_content.php?pageid=' + template.Id"  :id="template.Id">Edit</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+  </div>
+    
+    
+
+
+
+    </div>
+<!-- </div> -->
 <!-- begin footer -->
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.js"></script>
 <script type="text/javascript" src="scripts/package.js"></script>
 
 <script>
@@ -200,6 +276,29 @@
             $('.followers-mid-sec .form-group #change-group-name').text(slug);
             $group_name.val('');
         })
+
+
+        jQuery('.editbutton').click(function() {
+        var page_id = $(this).parents('tr').find('#filename').text();
+        console.log(page_id);
+        $('.record_id').val(page_id);
+
+        jQuery('#SendCustomMethod').show();
+        jQuery('#cover').show();
+        });
+
+        jQuery('#popup_sendMail').click(function() {
+
+            jQuery('#SendCustomMethod').hide();
+            jQuery('#cover').hide();
+        });
+
+
+        jQuery('#popup_btncancel,.close-popup').click(function() {
+            jQuery('#SendCustomMethod').hide();
+            jQuery('#cover').hide();
+        });
+    
     });
 </script>
 <!-- end footer -->

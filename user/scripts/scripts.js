@@ -1216,7 +1216,7 @@ function  getUserCustomFields(merchantGuid,callback) {
 
       getFollowing('user', 'settings');
       getFollowing('items', 'settings');
-      getFollowers('settings');
+      getFollowers('settings',userId);
 
 
       $("#following-tab").click(function(){
