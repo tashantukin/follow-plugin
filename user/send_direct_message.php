@@ -7,7 +7,6 @@ $message = $content['message'];
 //$itemId = $content['itemguid'];
 //$prodbundles = $content['prodbundles'];
 $protocol = stripos($_SERVER['SERVER_PROTOCOL'],'https') === 0 ? 'https://' : 'http://';
-​
 $baseUrl = getMarketplaceBaseUrl();
 $admin_token = getAdminToken();
 $customFieldPrefix = getCustomFieldPrefix();
@@ -16,14 +15,11 @@ $userToken = $_COOKIE["webapitoken"];
 $url = $baseUrl . '/api/v2/users/';
 $result = callAPI("GET", $userToken, $url, false);
 $userId = $result['ID'];
-​
-$url = $baseUrl . '/api/v2/users/';
+$url =  $baseUrl . '/api/v2/users/';
 $result = callAPI("GET", $admin_token['access_token'], $url, false);
 $admin_id = $result['ID'];
-​
 $url = $baseUrl . '/api/v2/items/' . $itemId;
 $item_details = callAPI("GET", null, $url, false);
-​
 $item_name = $item_details['Name'];
 $item_currency = $item_details['CurrencyCode'];
 $item_price = number_format((float)$item_details['Price'],2);

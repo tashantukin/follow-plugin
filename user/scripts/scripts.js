@@ -514,13 +514,13 @@ function  getUserCustomFields(merchantGuid,callback) {
                 
               })
 
-                sendEDM(itemId, function() {
+                sendEDM(itemId, 'create' ,function() {
                     if (typeof(success) === "function") return success(data, textStatus, jqXHR);
                 });
               
-                sendDirectMessage(itemId, 'created', function() {
-                  if (typeof(success) === "function") return success(data, textStatus, jqXHR);
-                });
+                // sendDirectMessage(itemId, 'created', function() {
+                //   if (typeof(success) === "function") return success(data, textStatus, jqXHR);
+                // });
               
             
             } else {
@@ -550,24 +550,24 @@ function  getUserCustomFields(merchantGuid,callback) {
           
          // if (data.Success) {
           
-            sendEDM(itemId, function() {
+            sendEDM(itemId, 'update', function() {
                 if (typeof(success) === "function") return success(data, textStatus, jqXHR);
             });
           
           
-            sendDirectMessage(itemId, 'update', function() {
-              if (typeof(success) === "function") return success(data, textStatus, jqXHR);
-            });
+            // sendDirectMessage(itemId, 'update', function() {
+            //   if (typeof(success) === "function") return success(data, textStatus, jqXHR);
+            // });
           
          
         };
     }
 });
 
-  function sendEDM(itemguid, callback)
+  function sendEDM(itemguid,type, callback)
   {
    // $('head').append(`<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.js"></script>`);
-    var data = { 'itemguid': itemguid};
+    var data = { 'itemguid': itemguid, type};
     var apiUrl = packagePath + '/send_edm.php';
     $.ajax({
         url: apiUrl,

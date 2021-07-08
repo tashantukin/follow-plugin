@@ -10,6 +10,12 @@ var userId = $('#userGuid').val();
 var accessToken = 'Bearer ' + getCookie('webapitoken')
 var pathname = (window.location.pathname + window.location.search).toLowerCase();
 var groupname;
+  
+const baseURL = window.location.hostname;
+const protocol = window.location.protocol;
+const token = getCookie('webapitoken');
+const url = window.location.href.toLowerCase();
+
 //switch
 function waitForElement(elementPath, callBack) {
   window.setTimeout(function () {
@@ -146,7 +152,163 @@ function saveCustomFields(status, merchantId){
       
     }
 
+    
+    if (url.indexOf("/admin/emailcustomisation") >= 0) {
+
+      //1. Hide the deprecated EDM's on the Orders List
+      
+      // OptionsShowHide([5, 6, 7]); // we only need the last 3 edms from the list, we will hide the rest
+      
+      //2. Append vue and axios reference on the page
+      $('.page-content').attr('id', 'app');
+
+      $('body').append(`<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.js"></script>`);
+      var script = document.createElement('script');
+      script.onload = function ()
+      {
+          new Vue({
+              el: "#app",
+              data()
+              {
+                  return {
+                      templates: [],
+                      sellerTemplates: [],
+                      buyerTemplates: [],
+                      itemsTemplates: [],
+                      editURL: `${protocol}//${baseURL}/admin/plugins/${packageId}/edit_content.php`
+                  }
+              },
+  
+              filters: {
+                  capitalize: function (str)
+                  {
+                      return str.charAt(0).toUpperCase() + str.slice(1);
+                  },
+  
+              },
+  
+              methods: {
+                  async getAllTemplates(action)
+                  {
+                      try {
+                          vm = this;
+                          const response = await axios({
+                              method: action,
+                              url: `${protocol}//${baseURL}/api/v2/plugins/${packageId}/custom-tables/Templates`,
+                              // data: data,
+                              headers: {
+                                  'Authorization': `Bearer ${token}`
+                              }
+                          })
+                          const templates = await response
+                          vm.templates = templates.data
+  
+                          vm.sellerTemplates = vm.templates.Records.filter((template) => template.category === 'Seller')
+                          vm.buyerTemplates = vm.templates.Records.filter((template) => template.category === 'Buyer')
+                          vm.itemsTemplates = vm.templates.Records.filter((template) => template.category === 'Items')
+                        
+                        
+                          // return templates
+  
+                      } catch (error) {
+                          console.log("error", error);
+                      }
+                  },
+              },
+              beforeMount()
+              {
+                  this.getAllTemplates('GET')
+              },
+  
+  
+          })
+
+
+         
+          //3. 
+      }
+      script.src = "https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js";
+
+      document.head.appendChild(script); //or something of the likes
+
+      var followDiv = `<div class="panel-box panel-style-ab" id="follow-div">
+                        <div class="panel-box-title">
+                            <h3>Follow Plugin</h3>
+                            <div class="pull-right"><a class="panel-toggle" href="javascript:void(0);"><i class="icon icon-toggle"></i></a></div>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="panel-box-content">
+                            <ul>
+                                  
+                                 
+                            </ul>
+                        </div>
+                    </div>`;
+    $('.page-content .panel-box').last().after(followDiv);
+
+
+      $('#follow-div .panel-box-content ul').append(`
+      <li v-for="template in sellerTemplates">
+          <h5> {{template['title']}}</h5>
+          <p>{{template['description']}}</p>
+          <a class="action-edit-template" :href="editURL + '?pageid=' + template.Id + '&redirect=admin'" :id="template.Id">Edit</a>
+
+         
+      </li>`);
+
+      
+      $('#follow-div .panel-box-content ul').append(`
+      <li v-for="template in buyerTemplates">
+          <h5> {{template['title']}}</h5>
+          <p>{{template['description']}}</p>
+          <a class="action-edit-template" :href="editURL + '?pageid=' + template.Id + '&redirect=admin'" :id="template.Id">Edit</a>
+
+         
+      </li>`);
+
+      $('#follow-div .panel-box-content ul').append(`
+      <li v-for="template in itemsTemplates">
+          <h5> {{template['title']}}</h5>
+          <p>{{template['description']}}</p>
+          <a class="action-edit-template" :href="editURL + '?pageid=' + template.Id + '&redirect=admin'" :id="template.Id">Edit</a>
+
+         
+      </li>`);
+
+  
+      
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
+
+
+
 
 function getCookie (name) {
     var value = '; ' + document.cookie;

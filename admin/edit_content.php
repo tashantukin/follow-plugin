@@ -94,10 +94,10 @@ $templateContent = getContent($page_id);
                                     <label class="">Email Type</label>
                                     <div class="parameter-drop-down">
                                         <select class="form-group custom-blue" id="email-type">
-                                            <option value="Orders" <?php if($templateContent['Records'][0]['category'] == 'Orders'){echo("selected");}?> >Orders</option>
-                                            <option value="Payment" <?php if($templateContent['Records'][0]['category'] == 'Payment'){echo("selected");}?>>Payment</option>
-                                            <option value="Shipment" <?php if($templateContent['Records'][0]['category'] == 'Shipment'){echo("selected");}?>>Shipment</option>
-                                            <option value="Buyer/Seller" <?php if($templateContent['Records'][0]['category'] == 'Buyer/Seller'){echo("selected");}?>>Buyer / Seller</option>
+                                            <option value="Seller" <?php if($templateContent['Records'][0]['category'] == 'Seller'){echo("selected");}?> >Seller</option>
+                                            <option value="Buyer" <?php if($templateContent['Records'][0]['category'] == 'Buyer'){echo("selected");}?>>Buyer</option>
+                                            <option value="Items" <?php if($templateContent['Records'][0]['category'] == 'Items'){echo("selected");}?>>Items</option>
+                                           
                                         </select>
                                     </div>
                                 </div>

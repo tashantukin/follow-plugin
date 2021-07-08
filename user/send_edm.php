@@ -4,7 +4,8 @@ include 'admin_token.php';
 $contentBodyJson = file_get_contents('php://input');
 $content = json_decode($contentBodyJson, true);
 $itemId = $content['itemguid'];
-$prodbundles = $content['prodbundles'];
+$type = $content['type'];
+
 $protocol = stripos($_SERVER['SERVER_PROTOCOL'],'https') === 0 ? 'https://' : 'http://';
 
 $baseUrl = getMarketplaceBaseUrl();
@@ -22,13 +23,24 @@ $admin_id = $result['ID'];
 
 $url = $baseUrl . '/api/v2/items/' . $itemId;
 $item_details = callAPI("GET", null, $url, false);
-
+$items_div ='';
 $item_name = $item_details['Name'];
 $item_currency = $item_details['CurrencyCode'];
 $item_price = number_format((float)$item_details['Price'],2);
 $item_sku = $item_details['SKU']; 
 $item_seller_displayname = $item_details['MerchantDetail']['DisplayName'];
 $item_image = $item_details['Media'][0]['MediaUrl'];
+
+$items_div .= "<tr><td style=\"vertical-align: top; width:20%; max-width:120px; min-width:33px;\"><img style=\"width:100%; max-width:120px;\" src=" . $item_image . "/></td><td style=\"vertical-align: top; padding-left:5px;\"><div style=\"line-height: 25px;\"><p style=\"margin-top:0px; color:#000; line-height:22px;\">" .  $item_name . "</p>";   
+
+foreach ($item_details['Variants'] as $variant) {
+
+$items_div .=  "<p>" . $variant['GroupName'] . ': ' . $variant['Name'] . "</p>";
+
+}
+
+$items_div .= "</td> <td style=\"width:25%; max-width: 150px; text-align: right; vertical-align: top; padding-top: 20px; font-size: 22px; color: #000; font-weight: bold;\">" .  $item_currency. ' ' . $item_price . "</td></tr><tr><td>&nbsp;</td>";
+
 
 
 $url = $baseUrl . '/api/v2/marketplaces/';
@@ -47,17 +59,25 @@ $item_link = $protocol . $mp_url . '/user/item/detail/' . str_replace(' ', '-', 
 
 //query to custom tables Templates
 //get your templates ID or name
-$tempoId = 'ed0f2131-3ef2-4ef1-9fb8-e20224eb1887';
-$templates = array(array('Name' => 'title', "Operator" => "in",'Value' => 'New Item Updates'));
-    $url =  $baseUrl . '/api/v2/plugins/'. $tempoId .'/custom-tables/Templates';
-    error_log(json_encode($url));
-    
-    $templateDetails =  callAPI("POST", $admin_token['access_token'], $url, $templates);
-    // error_log(json_encode($templateDetails));
+$tempoId = getPackageID();
 
+
+if ($type == 'create') {
+    $new_item_templates = array(array('Name' => 'title', "Operator" => "in",'Value' => 'New Item / Listing'));
+    $url =  $baseUrl . '/api/v2/plugins/'. $tempoId .'/custom-tables/Templates';
+    $templateDetails =  callAPI("POST", $admin_token['access_token'], $url, $new_item_templates);
+    // error_log(json_encode($templateDetails));
     $content = $templateDetails['Records'][0]['contents'];
 
-    
+}else {
+    $update_item_templates = array(array('Name' => 'title', "Operator" => "in",'Value' => 'Item Update'));
+    $url =  $baseUrl . '/api/v2/plugins/'. $tempoId .'/custom-tables/Templates';
+    $templateDetails =  callAPI("POST", $admin_token['access_token'], $url, $update_item_templates);
+    // error_log(json_encode($templateDetails));
+    $content = $templateDetails['Records'][0]['contents'];
+
+}
+
 
 foreach($merchant_details['CustomFields'] as $cf) {
     if ($cf['Name'] == 'followers_list' && substr($cf['Code'], 0, strlen($customFieldPrefix)) == $customFieldPrefix) {  
@@ -79,11 +99,13 @@ foreach($merchant_details['CustomFields'] as $cf) {
                     'MarketName' => $mp_name,
                     'ConsumerFirstName' => $follower_name,
                     'SellerName' => $merchant_details['DisplayName'],
+                    'SellerDisplayName' => $merchant_details['DisplayName'],
                     'ImageUrl' => $item_image,
                     'ItemName' => $item_name,
                     'CurrencyCode' => $item_currency,
                     'ItemPrice' => $item_price,
-                    'ItemLink' => $item_link 
+                    'ItemLink' => $item_link,
+                    'itemDetails' => $items_div
                 );
 
 
@@ -97,7 +119,7 @@ foreach($merchant_details['CustomFields'] as $cf) {
                     
                 //send the EDM
                 
-                    $subject = 'New item updates!';
+                    $subject =  $templateDetails['Records'][0]['subject'];
                     $data = [
                         'From' => $merchant_details['Email'],
                         'To' => $follower_email,
@@ -108,8 +130,8 @@ foreach($merchant_details['CustomFields'] as $cf) {
                 //error_log($data);
                 $url =  $baseUrl . '/api/v2/admins/' . $admin_id .'/emails';
                 $sendEDM = callAPI("POST", $admin_token['access_token'], $url, $data);
-                // echo json_encode(['result' => $sendEDM]);
-                // error_log(json_encode($sendEDM));
+                echo json_encode(['result' => $sendEDM]);
+                error_log(json_encode($sendEDM));
 
            
                 //send direct message

@@ -8,6 +8,7 @@
     const HOST = window.location.host;
     var customFieldPrefix = packageId.replace(/-/g, "");
     var userId = $('#userGuid').val();
+    var data1;      
     // var accessToken = 'Bearer ' + getCookie('webapitoken')
     var pathname = (window.location.pathname + window.location.search).toLowerCase();
     //switch
