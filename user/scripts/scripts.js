@@ -15,6 +15,7 @@
   var followingList = [];
   var itemFollowingList = [];
   var followingGroupList = [];
+  var itemFollowerList = [];
   var itemList = [];
   var currentUser = $('#subAccountUserGuid').length ? $('#subAccountUserGuid').val() : userId;
   var currentMerchant = $('#storefrontMerchantGuid').length ? $('#storefrontMerchantGuid').val() : $('#merchantGuid').val();
@@ -146,6 +147,9 @@ function  getUserCustomFields(merchantGuid,callback) {
     $.ajax({
       url: apiUrl,
       method: "GET",
+      beforeSend: function (xhr) {
+        xhr.setRequestHeader('Authorization', 'Bearer ' +  token);
+       },
       contentType: "application/json",
       success: function (result) {
         if (result) {
@@ -164,6 +168,7 @@ function  getUserCustomFields(merchantGuid,callback) {
     $.ajax({
       url: apiUrl,
       method: "GET",
+      
       contentType: "application/json",
       success: function (result) {
         if (result) {
@@ -193,6 +198,25 @@ function  getUserCustomFields(merchantGuid,callback) {
     });
   }
 
+  function getItemCustomFields(itemGuid, callback)
+  {
+    var apiUrl = `/api/v2/items/${itemGuid}`;
+    console.log(apiUrl);
+    $.ajax({
+      url: apiUrl,
+      method: "GET",
+      contentType: "application/json",
+      success: function (result) {
+        if (result) {
+          callback(result.CustomFields);
+        }
+      },
+    });
+
+  }
+
+
+  
   function saveCustomFields(followersList, merchantId, followingList,type, followingListGroup,page)
 	{
 		var data  = { 'followers-id' : followersList, 'merchant-id' : merchantId, 'user-id' : userId, 'following-id' : followingList, 'user-type' : type, 'following-group-list' : followingListGroup } 
@@ -224,9 +248,9 @@ function  getUserCustomFields(merchantGuid,callback) {
 		});
   }
   
-  function saveItemCustomFields(itemList, userId)
+  function saveItemCustomFields(itemList, userId, itemFollowers)
 	{
-		var data  = { 'items-id' : itemList, 'user-id' : userId} 
+		var data  = { 'items-id' : itemList, 'user-id' : userId, 'item-guid' : itemGuid, 'merchant-guid' : currentMerchant, 'item-followers' : itemFollowers}  
 		//console.log(data);
 		var apiUrl = packagePath + '/save_follow_items.php';
 		$.ajax({
@@ -586,89 +610,7 @@ function  getUserCustomFields(merchantGuid,callback) {
     });
   }
   
-  function sendDirectMessage(itemId, action, callback) {
-    var apiUrl = packagePath + '/get_token.php';
-    $.ajax({
-        url: apiUrl,
-        method: 'POST',
-     
-        contentType: 'application/json',
-        // data: JSON.stringify(data),
-      success: function (response)
-      {
-        var token = $.parseJSON(response);
-        token = token['token']['access_token'];
-        // callback(); 
-        getUserCustomFields(userId, function (result)
-        {
-
-          if (result) {
-
-            $.each(result, function (index, cf)
-            {
-              if (cf.Name == 'followers_list' && cf.Code.startsWith(customFieldPrefix)) {
-                var followers = cf.Values[0].split(',');
-                console.log(followers)
-                var allFollowers = followers.filter(distinct);
-                console.log(allFollowers);
-                $.each(allFollowers, function (index, followerId)
-                {
-                  $.ajax({
-                    url: `/api/v2/users/${userId}/channels?recipientId=${followerId}`,
-                    method: 'POST',
-                    beforeSend: function (xhr) {
-                      xhr.setRequestHeader('Authorization', 'Bearer ' +  token);
-                     },
-                    contentType: 'application/json',
-
-                    success: function (response)
-                    {
-                      var channelId = response['ChannelID'];
-                      getItemInfo(itemId, channelId, token);
-
-                      
-                    }
-
-                    })
-                })
-
-              }
-              
-            })
-            
-          }
-
-        })
-      },
-      error: function(jqXHR, status, err) {
-          callback();
-      }
-    });
-  }
-
-
-  function saveSubAccountDetails(userId,fname, lname, contact, email)
-  {
-    var data = { 'user-guid': userId, 'last-name' : lname, 'first-name' : fname, 'email' :email , 'contact-number': contact };
-    var apiUrl = packagePath + '/save_sub_account.php';
-    $.ajax({
-        url: apiUrl,
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(data),
-        success: function(response) {
-         // console.log(JSON.parse(response))
-          toastr.success('Details successfully saved.');
-          window.location = '/user/item/list';
-
-        },
-        error: function(jqXHR, status, err) {
-            //   toastr.error('---');
-           
-        }
-    });
-  }
-  
+ 
   function getFollowing(type,page)
   {
     $('#following-list').val('');
@@ -881,7 +823,38 @@ function  getUserCustomFields(merchantGuid,callback) {
          }
        })
      }
-   })
+    })
+  }
+
+
+  function getItemFollowers(page, itemguid)
+  {
+    getItemCustomFields(itemguid, function (result)
+    {
+      if (result) {
+        $.each(result, function (index, cf)
+        {
+          if (cf.Name == 'item_followers' && cf.Code.startsWith(customFieldPrefix)) {
+            var currentFollowers = cf.Values[0];
+            console.log(`followers ${currentFollowers}`)
+            if (currentFollowers) {
+              $('#item-followers-list').val(currentFollowers);
+              itemFollowerList = $('#item-followers-list').val().split(',');
+              $(".item-description .desc-sec-opt").each(function (index)
+              {
+
+                if ($(this).attr('data-code') == cf.Code) {
+                  $(this).hide();
+                }
+                
+              })
+            }
+          }
+          
+        })
+      }
+
+    })
   }
   function appendFollowButton(page)
   {
@@ -893,9 +866,10 @@ function  getUserCustomFields(merchantGuid,callback) {
     
     var followersDivStoreFront = `<input type="hidden" id="followers-list" >`;
     var followersDivItemDetails = `<input type="hidden" id="followers-list" >`;
+    var itemFollowersDiv =`<input type="hidden" id="item-followers-list" >`;
 
     if (page != 'orders') {
-      page == 'item' ? ($('.item-star').append(itemDetailButton), $('body').append(followersDivItemDetails)) : ($('.store-rating').before(storeFrontButton), $('body').append(followersDivStoreFront)) ;
+      page == 'item' ? ($('.item-star').append(itemDetailButton), $('body').append(followersDivItemDetails),$('body').append(itemFollowersDiv) ) : ($('.store-rating').before(storeFrontButton), $('body').append(followersDivStoreFront)) ;
       getFollowers('storefront', merchantId);
       getFollowing('users');
     } else {
@@ -974,7 +948,32 @@ function  getUserCustomFields(merchantGuid,callback) {
    }
    
   
- }
+  }
+  
+
+  function sendDeleteEDM(itemguid)
+  {
+    var data = { 'itemguid': itemguid};
+    var apiUrl = packagePath + '/send_delete_edm.php';
+    $.ajax({
+        url: apiUrl,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+      success: function (response)
+      {
+        $('.delete-button').click();
+        
+        //  callback();
+            //  toastr.success('Successfully saved.');
+
+        },
+        error: function(jqXHR, status, err) {
+            //   toastr.error('---');
+           // callback();
+        }
+    });
+  }
   
   $(document).ready(function ()
   {
@@ -1067,10 +1066,21 @@ function  getUserCustomFields(merchantGuid,callback) {
 
         getFollowing('items');
 
+        getItemFollowers('items', itemGuid);
+
         $(document).on("click", "#follow", function ()
         {
           console.log('follow click');
           var allItems;
+          var allItemFollowers;
+
+          if (itemFollowerList.length) {
+              allItemFollowers =  $('#follow').attr('status') == 'following' ? itemFollowerList.filter(function (value) { return value !== userId; })
+              : [...itemFollowerList, userId];
+          } else {
+            allItemFollowers = userId;
+          }
+
           if (itemFollowingList.length) {
             console.log('if');
             itemFollowingList = itemFollowingList.filter(function (value) { return value.length > 5 })
@@ -1078,12 +1088,14 @@ function  getUserCustomFields(merchantGuid,callback) {
 
             allItems = $('#follow').attr('status') == 'following' ? itemFollowingList.filter(function (value) { return value !== itemGuid; })
               : [...itemFollowingList, itemGuid];
-          
-            saveItemCustomFields(allItems, itemGuid);
+            
+            
+           
+            saveItemCustomFields(allItems, itemGuid, allItemFollowers);
            // $('#follow').attr('status', 'not-following')
             //$('#follow').attr('status', 'not-following')
           } else {
-            saveItemCustomFields(itemGuid, userId);
+            saveItemCustomFields(itemGuid, userId, allItemFollowers);
           }
 
         });
@@ -1232,14 +1244,25 @@ function  getUserCustomFields(merchantGuid,callback) {
       });
 
        ////Following Script
-        $(".following-button").hover(
-          function () {
-              $(this).text("Remove").addClass('remove');
-          },
-          function () {
-              $(this).text("Following").removeClass("remove");
+      //   $(".following-button").hover(
+      //     function () {
+      //         $(this).text("Remove").addClass('remove');
+      //     },
+      //     function () {
+      //         $(this).text("Following").removeClass("remove");
+      //     }
+      // );
+
+      $(".following-button").hover(function() {
+        var $this = $(this);
+          if($this.text() === "Following"){
+            $this.text("Remove");
+            $this.addClass('remove')
+          }else {
+            $this.text("Following");
+            $this.removeClass("remove");
           }
-      );
+        });
 
 
 
@@ -1305,8 +1328,61 @@ function  getUserCustomFields(merchantGuid,callback) {
     }
 
   
+  //item deleted EDM
+    if (pathname.indexOf('user/item/list') >= 0) {
 
+
+      $('.item-remove-popup .btn-area .pull-right .my-btn').clone().appendTo('.item-remove-popup .btn-area .pull-right');
+      $('.item-remove-popup .btn-area .pull-right .my-btn').first().addClass('delete-button');
+      $('.item-remove-popup .btn-area .pull-right .my-btn').last().addClass('clone-button');
+      $('.delete-button').hide();
+      $('.clone-button').removeAttr('onclick');
+
+
+    
+      $(document).on("click", ".item-actions li:nth-child(2)", function ()
+      {
+        
+        $('.item-remove-popup .btn-area .pull-right .my-btn').attr('data-guid', $(this).parents('.item-row').attr('data-guid'));
+        console.log($(this).parents('.item-row').attr('data-guid'));
+
+
+      })
+
+      $(document).on("click", ".clone-button", function ()
+      {
+        
+        sendDeleteEDM($(this).attr('data-guid'));
+
+      })
+
+    }
    
+
+    if (pathname.indexOf('user/item/upload') >= 0) {
+
+      $('​#category-list').find("input[type='checkbox']").click(function() {
+        //if(this.checked) {
+
+        console.log('click cb');
+          waitForElement('#customFields div input', function ()
+            {
+              console.log('inside wait');
+              $("#customFields div").each(function (index)
+              {
+                if ($(this).find('input').attr('data-name') == 'item_followers') {
+                  $(this).hide();
+                }
+              })
+                
+                
+            })
+       // }
+    });
+
+     
+
+    }
 
     
     
