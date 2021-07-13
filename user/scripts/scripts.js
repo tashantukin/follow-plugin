@@ -999,9 +999,32 @@ function  getUserCustomFields(merchantGuid,callback) {
     });
   }
 
+  function sendPurchaseEDM()
+  {
+    //var data = { 'itemguid': itemguid};
+    var apiUrl = packagePath + '/send_purchase_edm.php';
+    $.ajax({
+        url: apiUrl,
+        method: 'POST',
+        contentType: 'application/json',
+      //  data: JSON.stringify(data),
+      success: function (response)
+      {
+       
+        //  callback();
+            //  toastr.success('Successfully saved.');
 
+      },
+        error: function(jqXHR, status, err) {
+            //   toastr.error('---');
+           // callback();
+        }
+    });
+  }
 
   
+
+
   $(document).ready(function ()
   {
     
@@ -1415,8 +1438,11 @@ function  getUserCustomFields(merchantGuid,callback) {
 
     }
 
-    
-    
 
+    if (pathname.indexOf('user/checkout/success') >= 0) {
+      sendPurchaseEDM();
+    }
+
+ 
   });
 })();
