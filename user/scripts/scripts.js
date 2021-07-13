@@ -963,7 +963,7 @@ function  getUserCustomFields(merchantGuid,callback) {
       success: function (response)
       {
         $('.delete-button').click();
-        
+
         //  callback();
             //  toastr.success('Successfully saved.');
 
@@ -974,6 +974,33 @@ function  getUserCustomFields(merchantGuid,callback) {
         }
     });
   }
+
+  function sendViewEDM(itemguid)
+  {
+    var data = { 'itemguid': itemguid};
+    var apiUrl = packagePath + '/send_view_edm.php';
+    $.ajax({
+        url: apiUrl,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+      success: function (response)
+      {
+       
+
+        //  callback();
+            //  toastr.success('Successfully saved.');
+
+        },
+        error: function(jqXHR, status, err) {
+            //   toastr.error('---');
+           // callback();
+        }
+    });
+  }
+
+
+
   
   $(document).ready(function ()
   {
@@ -1057,7 +1084,11 @@ function  getUserCustomFields(merchantGuid,callback) {
 
     if (pathname.indexOf('user/item/detail') >= 0) {
 
-      if ( (!$('.register-link').length) && (currentMerchant != userId)) {
+      if ((!$('.register-link').length) && (currentMerchant != userId)) {
+        
+
+        //send edm if the buyer view an item
+        sendViewEDM(itemGuid);
 
         checkIfFollowAllowed('item');
 
