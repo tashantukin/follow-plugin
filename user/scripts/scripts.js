@@ -11,6 +11,8 @@
   var userId = $("#userGuid").val();
   var itemGuid = $('#itemGuid').val();
   var merchantId = $('#storefrontMerchantGuid').val()
+  var timezone_offset_minutes = new Date().getTimezoneOffset();
+  timezone_offset_minutes = timezone_offset_minutes == 0 ? 0 : -timezone_offset_minutes;
   var followerList = [];
   var followingList = [];
   var itemFollowingList = [];
@@ -214,8 +216,6 @@ function  getUserCustomFields(merchantGuid,callback) {
     });
 
   }
-
-
   
   function saveCustomFields(followersList, merchantId, followingList,type, followingListGroup,page)
 	{
@@ -826,7 +826,6 @@ function  getUserCustomFields(merchantGuid,callback) {
     })
   }
 
-
   function getItemFollowers(page, itemguid)
   {
     getItemCustomFields(itemguid, function (result)
@@ -950,7 +949,6 @@ function  getUserCustomFields(merchantGuid,callback) {
   
   }
   
-
   function sendDeleteEDM(itemguid)
   {
     var data = { 'itemguid': itemguid};
@@ -1022,11 +1020,52 @@ function  getUserCustomFields(merchantGuid,callback) {
     });
   }
 
-  
+  function sendLoggedInEDM()
+  {
+    var data = { 'timezone':  timezone_offset_minutes};
+    var apiUrl = packagePath + '/send_login_edm.php';
+    $.ajax({
+        url: apiUrl,
+        method: 'POST',
+        contentType: 'application/json',
+       data: JSON.stringify(data),
+      success: function (response)
+      {
+       
+        //  callback();
+            //  toastr.success('Successfully saved.');
+
+      },
+        error: function(jqXHR, status, err) {
+            //   toastr.error('---');
+           // callback();
+        }
+    });
+  }
 
 
   $(document).ready(function ()
   {
+    
+    //send edm if the user is logged in 
+
+  
+    if ($('#userGuid').length) {
+
+      var isloggedIn = sessionStorage.getItem("isLoggedIn");
+      
+      if (isloggedIn != '1') {
+        console.log('isloggedin');
+
+        sendLoggedInEDM();
+
+        sessionStorage.setItem("isLoggedIn", "1");
+      }
+    
+    }
+    // Retrieve
+     
+  
     
     if (pathname.indexOf('user/merchantaccount') >= 0) {
 
@@ -1412,7 +1451,6 @@ function  getUserCustomFields(merchantGuid,callback) {
 
     }
    
-
     if (pathname.indexOf('user/item/upload') >= 0) {
 
       $('​#category-list').find("input[type='checkbox']").click(function() {
@@ -1437,7 +1475,6 @@ function  getUserCustomFields(merchantGuid,callback) {
      
 
     }
-
 
     if (pathname.indexOf('user/checkout/success') >= 0) {
       sendPurchaseEDM();
