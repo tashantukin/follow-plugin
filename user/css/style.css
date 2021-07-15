@@ -55,6 +55,13 @@
     align-items: center;
 }
 
+.following-row-scroll {
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+
+
 .following-row:last-child {
     border-bottom: 0px solid #F0F0F0;
 }

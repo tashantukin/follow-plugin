@@ -41,6 +41,150 @@
       }
     }
 
+  
+  function paginator(items, current_page, per_page_items, tab) {
+    let page = current_page || 1,
+    per_page = per_page_items || 20,
+    offset = (page - 1) * per_page,
+
+    paginatedItems = items.slice(offset).slice(0, per_page_items),
+      total_pages = Math.ceil(items.length / per_page);
+    
+    $(`#${tab} .pagination`).find('.list').remove();
+    $(`#${tab}`).find('.following-row').remove();
+    
+    if (tab == "followers") {
+      $.each(paginatedItems, function (index, userId)
+      {
+        getUserDetails(userId, function (user)
+        {
+          userRow = `<div class="following-row">
+            <div class="following-image">
+            <img src="${user['Media'][0]['MediaUrl']}">
+            </div>
+            <div class="following-display-name">
+            ${user['DisplayName']}
+            </div>
+          </div>`
+          
+            $(`#${tab} .tab-pane .following-row-scroll`).prepend(userRow);
+          // i++;
+        })
+      })
+    }
+
+    if (tab == 'following_items') {
+      
+      $.each(paginatedItems, function (index, itemId)
+      {
+        getItemDetails(itemId, function (item)
+        {
+            userRow = `<div class="following-row">
+            <a href="#" class="following-links">
+                <div class="following-image">
+                    <img src="${item['Media'][0]['MediaUrl']}">
+                </div>
+                <div class="following-display-name">
+                   ${item['Name']}
+                </div>
+            </a>
+            
+            <div class="following-actions">
+                <a class="following-button" href="#">Following</a>
+            </div>
+        </div>`
+          
+            $(`#${tab} .following-row-scroll`).prepend(userRow);
+         
+        })
+      })
+
+    }
+
+    if (tab == 'following_users') {
+      $.each(paginatedItems, function (index, userId)
+      {
+        getUserDetails(userId, function (user)
+        {
+            userRow = `<div class="following-row">
+            <a href="#" class="following-links">
+                <div class="following-image">
+                    <img src="${user['Media'][0]['MediaUrl']}">
+                </div>
+                <div class="following-display-name">
+                   ${user['DisplayName']}
+                </div>
+            </a>
+            
+            <div class="following-actions">
+                <a class="following-button" href="#">Following</a>
+            </div>
+        </div>`
+          
+            $(`#${tab} .following-row-scroll`).prepend(userRow);
+        //  i++;
+        })
+
+        // $('#company').append(options); 
+      })
+    }
+
+    if (tab == 'following_group_name') {
+      $.each(paginatedItems, function (index, userId)
+      {
+        getUserDetails(userId, function (user)
+        {
+            userRow = `<div class="following-row">
+            <a href="#" class="following-links">
+                <div class="following-image">
+                    <img src="${user['Media'][0]['MediaUrl']}">
+                </div>
+                <div class="following-display-name">
+                   ${user['DisplayName']}
+                </div>
+            </a>
+            
+            <div class="following-actions">
+                <a class="following-button" href="#">Following</a>
+            </div>
+        </div>`
+          
+            $(`#${tab} .following-row-scroll`).prepend(userRow);
+         // i++;
+        })
+
+      })
+
+    }
+   
+    var i = 1;
+    var pagination_list= "";
+    while (i <= total_pages) {
+      if (i == 1) {
+
+        pagination_list += `<li class="active list" id="first-page" indx= ${i}><a href="#">${i}</a></li>`; 
+      } else {
+        pagination_list += `<li indx= ${i} class="list"><a href="#">${i}</a></li>`
+      }
+      i++;
+    }
+    console.log(`pages ${pagination_list} `)
+    $(`#${tab} .pagination li`).last().before(pagination_list);
+
+
+    return {
+        page: page,
+        per_page: per_page,
+        pre_page: page - 1 ? page - 1 : null,
+        next_page: (total_pages > page) ? page + 1 : null,
+        total: items.length,
+        total_pages: total_pages,
+        data: paginatedItems
+    };
+  }
+
+  
+  
   const distinct = (value, index, self) =>
   {
     return self.indexOf(value) === index
@@ -622,39 +766,15 @@ function  getUserCustomFields(merchantGuid,callback) {
         if (type == 'items') {
           if (cf.Name == 'following_items' && cf.Code.startsWith(customFieldPrefix)) {
             var followingItems = cf.Values[0];
+            $('#following-item-list').val(followingItems);
             console.log(`following items ${followingItems}`)
 
             if (page == 'settings') {  //retrieve following in user settings
               var item_list = followingItems.split(',');
               item_list = item_list.filter(function (v) { return v.length > 5 || v != v });
                 console.log(`items ${item_list}`);
-
-                var i = 1;
-                $.each(item_list, function (index, itemId)
-                {
-                  getItemDetails(itemId, function (item)
-                  {
-                      userRow = `<div class="following-row">
-                      <a href="#" class="following-links">
-                          <div class="following-image">
-                              <img src="${item['Media'][0]['MediaUrl']}">
-                          </div>
-                          <div class="following-display-name">
-                             ${item['Name']}
-                          </div>
-                      </a>
-                      
-                      <div class="following-actions">
-                          <a class="following-button" href="#">Following</a>
-                      </div>
-                  </div>`
-                    
-                      $('#following_items').prepend(userRow);
-                   
-                  })
-      
-                  // $('#company').append(options); 
-                })
+              paginator(item_list, 1, 20, 'following_items');
+             
             } else {
               if (followingItems) {
                 $('#item-following-list').val(followingItems);
@@ -672,6 +792,7 @@ function  getUserCustomFields(merchantGuid,callback) {
         } else {
           if (cf.Name == 'following_users' && cf.Code.startsWith(customFieldPrefix)) {
             var currentFollowing = cf.Values[0];
+            $('#following-user-list').val(currentFollowing);
             console.log(`following ${currentFollowing}`)
             if (currentFollowing) {
               
@@ -680,32 +801,8 @@ function  getUserCustomFields(merchantGuid,callback) {
                 following_list = following_list.filter(function (v) { return v.length > 5 || v != v });
                   console.log(`users ${following_list}`);
   
-                  var i = 1;
-                  $.each(following_list, function (index, userId)
-                  {
-                    getUserDetails(userId, function (user)
-                    {
-                        userRow = `<div class="following-row">
-                        <a href="#" class="following-links">
-                            <div class="following-image">
-                                <img src="${user['Media'][0]['MediaUrl']}">
-                            </div>
-                            <div class="following-display-name">
-                               ${user['DisplayName']}
-                            </div>
-                        </a>
-                        
-                        <div class="following-actions">
-                            <a class="following-button" href="#">Following</a>
-                        </div>
-                    </div>`
-                      
-                        $('#following_users').prepend(userRow);
-                      i++;
-                    })
-        
-                    // $('#company').append(options); 
-                  })
+                 // var i = 1;
+                paginator(following_list, 1, 20,'following_users')
               }
 
               else {
@@ -719,6 +816,7 @@ function  getUserCustomFields(merchantGuid,callback) {
           //for following group lists
           if (cf.Name == 'following_group' && cf.Code.startsWith(customFieldPrefix)) {
             var currentFollowingGroup = cf.Values[0];
+            $('#following-group-list').val(currentFollowingGroup);
             console.log(`following ${currentFollowingGroup}`)
             if (currentFollowingGroup ) {
               
@@ -727,32 +825,8 @@ function  getUserCustomFields(merchantGuid,callback) {
                 following_list_group = following_list_group.filter(function (v) { return v.length > 5 || v != v });
                   console.log(`users ${following_list_group}`);
   
-                  var i = 1;
-                  $.each(following_list_group, function (index, userId)
-                  {
-                    getUserDetails(userId, function (user)
-                    {
-                        userRow = `<div class="following-row">
-                        <a href="#" class="following-links">
-                            <div class="following-image">
-                                <img src="${user['Media'][0]['MediaUrl']}">
-                            </div>
-                            <div class="following-display-name">
-                               ${user['DisplayName']}
-                            </div>
-                        </a>
-                        
-                        <div class="following-actions">
-                            <a class="following-button" href="#">Following</a>
-                        </div>
-                    </div>`
-                      
-                        $('#following_group_name').prepend(userRow);
-                      i++;
-                    })
-        
-                    // $('#company').append(options); 
-                  })
+                  //var i = 1;
+                paginator(following_list_group, 1, 20, 'following_group_name');
               }
 
               else {
@@ -780,32 +854,16 @@ function  getUserCustomFields(merchantGuid,callback) {
        {
          if (cf.Name == 'followers_list' && cf.Code.startsWith(customFieldPrefix)) {
            var currentFollowers = cf.Values[0];
+           $('#followers-list').val(currentFollowers);
            console.log(`followers ${currentFollowers}`)
 
 
            if (page == 'settings') {  //retrieve followers in user settings
             var follower_list = currentFollowers.split(',')
-            follower_list = follower_list.filter(function (v) { return v.length > 5 || v != v });
-              console.log(`users ${follower_list}`);
-
-              var i = 1;
-              $.each(follower_list, function (index, userId)
-              {
-                getUserDetails(userId, function (user)
-                {
-                  userRow = `<div class="following-row">
-                    <div class="following-image">
-                    <img src="${user['Media'][0]['MediaUrl']}">
-                    </div>
-                    <div class="following-display-name">
-                    ${user['DisplayName']}
-                    </div>
-                  </div>`
-                  
-                    $('#followers .tab-pane').prepend(userRow);
-                  i++;
-                })
-              })
+             follower_list = follower_list.filter(function (v) { return v.length > 5 || v != v });
+             
+             paginator(follower_list, 1, 20,'followers')
+              
             }
            
 
@@ -1201,7 +1259,12 @@ function  getUserCustomFields(merchantGuid,callback) {
       //add new tab for following - followers
       var followingTab = `<li><a href="#following" aria-expanded="true" id ="following-tab"> <span> FOLLOWING </span></a> </li>`
       var followersTab = `<li><a href="#followers" aria-expanded="true" id ="followers-tab"> <span>  FOLLOWERS </span></a> </li>`
-     
+
+      $('body').append(`<input type="hidden" id="followers-list" >`)
+      $('body').append(`<input type="hidden" id="following-item-list" >`)
+      $('body').append(`<input type="hidden" id="following-user-list" >`)
+      $('body').append(`<input type="hidden" id="following-group-list">`)
+
       $('#setting-tab').append(followingTab, followersTab);
 
       // add the tab contents
@@ -1246,44 +1309,39 @@ function  getUserCustomFields(merchantGuid,callback) {
 
               </ul>
               <div class="tab-pane fade active in" id="following_group_name">
-                
+              <div class="following-row-scroll">
+
+              </div>
                   <div class="sellritemlst-btm-pgnav">
                       <ul class="pagination">
-                          <li> <a href="#" aria-label="Previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
-                          <li class="active"><a href="#">1</a></li>
-                          <li><a href="#">2</a></li>
-                          <li><a href="#">3</a></li>
-                          <li><a href="#">4</a></li>
-                          <li><a href="#">5</a></li>
+                          <li> <a href="#" aria-label="Previous" id="previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                          
+                         
                           <li> <a href="#" aria-label="Next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
                       </ul>
                   </div>
               </div>
               <div class="tab-pane fade" id="following_users">
-                 
+                  <div class="following-row-scroll">
+                
+                  </div>
                   <div class="sellritemlst-btm-pgnav">
                       <ul class="pagination">
-                          <li> <a href="#" aria-label="Previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
-                          <li class="active"><a href="#">1</a></li>
-                          <li><a href="#">2</a></li>
-                          <li><a href="#">3</a></li>
-                          <li><a href="#">4</a></li>
-                          <li><a href="#">5</a></li>
-                          <li> <a href="#" aria-label="Next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
+                          <li> <a href="#" aria-label="Previous"id="previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                         
+                          <li> <a href="#" aria-label="Next" id="next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
                       </ul>
                   </div>
               </div>
               <div class="tab-pane fade" id="following_items">
-                  
+              <div class="following-row-scroll">
+                
+              </div>
                   <div class="sellritemlst-btm-pgnav">
                       <ul class="pagination">
-                          <li> <a href="#" aria-label="Previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
-                          <li class="active"><a href="#">1</a></li>
-                          <li><a href="#">2</a></li>
-                          <li><a href="#">3</a></li>
-                          <li><a href="#">4</a></li>
-                          <li><a href="#">5</a></li>
-                          <li> <a href="#" aria-label="Next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
+                          <li> <a href="#" aria-label="Previous" id="previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                         
+                          <li> <a href="#" aria-label="Next" id="next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
                       </ul>
                   </div>
               </div>
@@ -1296,16 +1354,14 @@ function  getUserCustomFields(merchantGuid,callback) {
           <div class="following-plug-container">
 
               <div class="tab-pane fade active in">
-                 
+              <div class="following-row-scroll">
+                
+              </div>
                   <div class="sellritemlst-btm-pgnav">
                       <ul class="pagination">
-                          <li> <a href="#" aria-label="Previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
-                          <li class="active"><a href="#">1</a></li>
-                          <li><a href="#">2</a></li>
-                          <li><a href="#">3</a></li>
-                          <li><a href="#">4</a></li>
-                          <li><a href="#">5</a></li>
-                          <li> <a href="#" aria-label="Next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
+                          <li> <a href="#" aria-label="Previous" id="previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                         
+                          <li> <a href="#" aria-label="Next" id="next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
                       </ul>
                   </div>
               </div>
@@ -1346,7 +1402,8 @@ function  getUserCustomFields(merchantGuid,callback) {
       //     }
       // );
 
-      $(".following-button").hover(function() {
+  
+        $(document).on("mouseover", ".following-button" , function() {
         var $this = $(this);
           if($this.text() === "Following"){
             $this.text("Remove");
@@ -1355,9 +1412,34 @@ function  getUserCustomFields(merchantGuid,callback) {
             $this.text("Following");
             $this.removeClass("remove");
           }
-        });
+      });
+      
 
+      $(document).on("click", ".pagination li" , function() {
+       //$(".pagination li").click(function(){
+        console.log('li click');
+        
+      
+         var tab = ($(this).parents('.tab-pane').attr('id'));
+       //  $(this).parents('.tab-pane').find('.following-row').remove();
+         if (tab == 'followers') {
+         
+          paginator($('#followers-list').val().split(','), parseInt($(this).attr('indx')), 20, tab)
+         }
 
+         if (tab == 'following_items') {
+         
+           paginator($('#following-item-list').val().split(','), parseInt($(this).attr('indx')), 20, tab)
+           
+         }
+         if (tab == 'following_users') {
+          paginator($('#following-user-list').val().split(','), parseInt($(this).attr('indx')), 20,tab)
+         }
+         if (tab == 'following_group_name') {
+          paginator($('#following-group-list').val().split(','), parseInt($(this).attr('indx')), 20, tab)
+         }
+        
+      })
 
     }
     // buyer settings
