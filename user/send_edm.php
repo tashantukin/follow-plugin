@@ -48,7 +48,6 @@ $mp_details = callAPI("GET", null, $url, false);
 
 $mp_name = $mp_details['Name'];
 $mp_logo = $mp_details['LogoUrl'];
-//$mplink =   substr($mplogo, 0, strpos($mplogo, "/images"));
 $mp_url = $mp_details['DefaultDomain'];
 
 
@@ -66,7 +65,6 @@ if ($type == 'create') {
     $new_item_templates = array(array('Name' => 'title', "Operator" => "in",'Value' => 'New Item / Listing'));
     $url =  $baseUrl . '/api/v2/plugins/'. $tempoId .'/custom-tables/Templates';
     $templateDetails =  callAPI("POST", $admin_token['access_token'], $url, $new_item_templates);
-    // error_log(json_encode($templateDetails));
     $content = $templateDetails['Records'][0]['contents'];
 
 }else {
@@ -127,29 +125,9 @@ foreach($merchant_details['CustomFields'] as $cf) {
                         'Body' =>  $emailContent
 
                     ];
-                //error_log($data);
                 $url =  $baseUrl . '/api/v2/admins/' . $admin_id .'/emails';
                 $sendEDM = callAPI("POST", $admin_token['access_token'], $url, $data);
-                echo json_encode(['result' => $sendEDM]);
-                error_log(json_encode($sendEDM));
-
-           
-                //send direct message
-
-                // //get channel ID
-                // $url =  $baseUrl . '/api/v2/users/' . $userId . '/channels?recipientId=' . $follower_id;
-                // error_log('url ' . $url);
-                // // $chat_channel = callAPI("POST", $admin_token['access_token'], $url, {});
-                // $chat_channel = callAPI("POST", $admin_token['access_token'], $url, false);
-                // error_log('chat ' .json_encode($chat_channel));    
-
-                // $data = json_encode(['Message' => $emailContent]);
                 
-        
-                // $url =  $baseUrl . '/api/v2/users/' . $userId . '/channels/' . $chat_channel['ChannelID'];
-                // $sendMessage = callAPI("POST", $admin_token['access_token'], $url, $data);
-                // echo json_encode(['result' => $sendMessage]);
-                // error_log(json_encode($sendMessage));
 
             }
       
