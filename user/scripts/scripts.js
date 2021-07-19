@@ -686,11 +686,7 @@ function  getUserCustomFields(merchantGuid,callback) {
                     if (typeof(success) === "function") return success(data, textStatus, jqXHR);
                 });
               
-                // sendDirectMessage(itemId, 'created', function() {
-                //   if (typeof(success) === "function") return success(data, textStatus, jqXHR);
-                // });
               
-            
             } else {
                 if (typeof(success) === "function") return success(data, textStatus, jqXHR);
             }

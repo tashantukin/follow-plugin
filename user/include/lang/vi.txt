@@ -1,0 +1,10 @@
+{
+    "lang": "vn",
+    "No": "No",
+    "Yes": "Yes",
+    "or": "or",
+    "Total": "Tổng",
+    "Tax": "Thuế",
+    "DiscountAmount": "Chiết khấu",
+    "SubTotal": "Tổng phụ"
+}

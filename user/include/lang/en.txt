@@ -1,0 +1,10 @@
+{
+    "lang": "en",
+    "No": "No",
+    "Yes": "Yes",
+    "or": "or",
+    "Total": "Total",
+    "Tax": "Tax",
+    "DiscountAmount": "DiscountAmount",
+    "SubTotal": "SubTotal"
+}
