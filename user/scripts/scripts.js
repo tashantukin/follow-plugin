@@ -79,8 +79,9 @@
       {
         getItemDetails(itemId, function (item)
         {
+          var itemName = item['Name'].replace(" ", "-").trim();
             userRow = `<div class="following-row">
-            <a href="#" class="following-links">
+            <a href="/user/item/detail/${itemName}/${item['ID']}" class="following-links">
                 <div class="following-image">
                     <img src="${item['Media'][0]['MediaUrl']}">
                 </div>
@@ -306,6 +307,30 @@ function  getUserCustomFields(merchantGuid,callback) {
     });
   }
 
+  function  getMerchantCustomFields(merchantGuid,callback) {
+		var apiUrl = packagePath + '/get_merchant_customfields.php';
+		var data = { 'userId': merchantGuid };
+		$.ajax({
+			url: apiUrl,
+			method: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(data),
+			success: function (response)
+			{
+				//console.log(JSON.stringify(response));
+				custom = $.parseJSON(response);
+				//console.log($.parseJSON(response));
+				if (custom) {
+					callback(custom.result.CustomFields);
+				}
+			}
+		});
+	}
+
+
+
+
+
   function getUserDetails(userId, callback)
   {
     var apiUrl = `/api/v2/users/${userId}?includes=AccountOwnerID`;
@@ -324,7 +349,6 @@ function  getUserCustomFields(merchantGuid,callback) {
       },
     });
   }
-
 
   function getItemDetails(itemId, callback)
   {
@@ -755,11 +779,15 @@ function  getUserCustomFields(merchantGuid,callback) {
   {
     $('#following-list').val('');
     getUserCustomFields(userId, function (result)
-    {   
+    {
+      console.log(type);
       //check following users
       $.each(result, function (index, cf)
       {
+        console.log(type);
         if (type == 'items') {
+          console.log(type);
+          console.log('type items');
           if (cf.Name == 'following_items' && cf.Code.startsWith(customFieldPrefix)) {
             var followingItems = cf.Values[0];
             $('#following-item-list').val(followingItems);
@@ -802,8 +830,10 @@ function  getUserCustomFields(merchantGuid,callback) {
               }
 
               else {
-                $('#following-list').val(currentFollowing);
-                followingList = $('#following-list').val().split(',');
+                if ($('#following-list').length) {
+                  $('#following-list').val(currentFollowing);
+                  followingList = $('#following-list').val().split(',');
+                }
               }
               
             }
@@ -826,8 +856,11 @@ function  getUserCustomFields(merchantGuid,callback) {
               }
 
               else {
-                $('#following-group-list').val(currentFollowingGroup);
-                followingGroupList = $('#following-group-list').val().split(',');
+                if ($('#following-group-list').length) {
+                  $('#following-group-list').val(currentFollowingGroup);
+                  followingGroupList = $('#following-group-list').val().split(',');
+                }
+               
               }
               
             }
@@ -842,7 +875,7 @@ function  getUserCustomFields(merchantGuid,callback) {
   function getFollowers(page, userToFollow)
   {
     $('#followers-list').val('');
-    getUserCustomFields(userToFollow, function (result)
+    getMerchantCustomFields(userToFollow, function (result)
     {
      if (result) { 
      //check following users
@@ -884,6 +917,7 @@ function  getUserCustomFields(merchantGuid,callback) {
   {
     getItemCustomFields(itemguid, function (result)
     {
+     // setTimeout(function() {	
       if (result) {
         $.each(result, function (index, cf)
         {
@@ -892,7 +926,11 @@ function  getUserCustomFields(merchantGuid,callback) {
             console.log(`followers ${currentFollowers}`)
             if (currentFollowers) {
               $('#item-followers-list').val(currentFollowers);
-              itemFollowerList = $('#item-followers-list').val().split(',');
+
+
+              setTimeout(function() {	
+                itemFollowerList = $('#item-followers-list').val().split(',');
+            
               $(".item-description .desc-sec-opt").each(function (index)
               {
 
@@ -901,13 +939,16 @@ function  getUserCustomFields(merchantGuid,callback) {
                 }
                 
               })
+                
+            }, 1000);
             }
           }
           
         })
       }
 
-    })
+      })
+   // }, 500);
   }
   function appendFollowButton(page)
   {
@@ -1118,9 +1159,7 @@ function  getUserCustomFields(merchantGuid,callback) {
     
     }
     // Retrieve
-     
-  
-    
+       
     if (pathname.indexOf('user/merchantaccount') >= 0) {
 
       if (!$('.register-link').length && currentMerchant != userId) { // only for registered users
@@ -1159,7 +1198,7 @@ function  getUserCustomFields(merchantGuid,callback) {
           checkIfFollowAllowed(userType);
         })
        
-        getFollowing('users');
+        getFollowing('users','storefront');
        
         $(document).on("click", "#follow", function ()
         {
@@ -1211,9 +1250,13 @@ function  getUserCustomFields(merchantGuid,callback) {
         var itemFollowingDiv = `<input type="hidden" id="item-following-list" >`;
         $('body').append(itemFollowingDiv);
 
-        getFollowing('items');
+        waitForElement('#item-following-list', function ()
+        {
+          getFollowing('items');
 
-        getItemFollowers('items', itemGuid);
+          getItemFollowers('items', itemGuid);
+        })
+
 
         $(document).on("click", "#follow", function ()
         {
@@ -1236,8 +1279,7 @@ function  getUserCustomFields(merchantGuid,callback) {
             allItems = $('#follow').attr('status') == 'following' ? itemFollowingList.filter(function (value) { return value !== itemGuid; })
               : [...itemFollowingList, itemGuid];
             
-            
-           
+          
             saveItemCustomFields(allItems, itemGuid, allItemFollowers);
            // $('#follow').attr('status', 'not-following')
             //$('#follow').attr('status', 'not-following')
