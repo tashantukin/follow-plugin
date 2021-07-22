@@ -29,7 +29,9 @@
   var isItemFollowAllowed;
   var isCompany;
   var buyerId;
-  
+  var noFollowingUsers = `${location.protocol}//${hostname}/user/plugins/${packageId}/images/empty-user.svg`;
+  var noFollowingitems = `${location.protocol}//${hostname}/user/plugins/${packageId}/images/empty-item.svg`;
+  var noFollowinggroups = `${location.protocol}//${hostname}/user/plugins/${packageId}/images/empty-group-name.svg`;
 
   var token = getCookie('webapitoken');
 
@@ -184,7 +186,6 @@
     };
   }
 
-  
   
   const distinct = (value, index, self) =>
   {
@@ -1179,21 +1180,21 @@ function  getUserCustomFields(merchantGuid,callback) {
           <div class="following-plug-container">
               <ul class="nav nav-tabs text-center" id="following_group-tab">
                   <li class="active">
-                      <a data-toggle="tab" href="#following_group_name" aria-expanded="true">
+                      <a data-toggle="tab" href="#following_group_name" aria-expanded="true" id="group-tab">
                           <span id ="group-name">
                            <group name>
                           </span>
                       </a>
                   </li>
                   <li class="">
-                      <a data-toggle="tab" href="#following_users" aria-expanded="true">
+                      <a data-toggle="tab" href="#following_users" aria-expanded="true" id="user-tab">
                           <span>
                               USERS
                           </span>
                       </a>
                   </li>
                   <li class="">
-                      <a data-toggle="tab" href="#following_items" aria-expanded="true">
+                      <a data-toggle="tab" href="#following_items" aria-expanded="true" id="item-tab">
                           <span>
                               ITEMS
                           </span>
@@ -1285,9 +1286,7 @@ function  getUserCustomFields(merchantGuid,callback) {
    
       });
 
-      
-
-  
+    
         $(document).on("mouseover", ".following-button" , function() {
         var $this = $(this);
           if($this.text() === "Following"){
@@ -1329,6 +1328,69 @@ function  getUserCustomFields(merchantGuid,callback) {
         
       })
 
+      $(document).on("click", "#following-tab", function ()
+      {
+        if (!$('#following_group_name .following-row').length) {
+          var noFollowingContent = `<div class="following-row">
+          <div class="empty-msg">
+              <div><img src="${noFollowinggroups}"></div>
+              <div class="nothing-to-see-mgs">Nothing to see here.</div>
+              </div>
+          </div>`;
+          $('#following_group_name').append(noFollowingContent);
+          $('#following_group_name .pagination').hide();
+
+        }
+
+      })
+
+      $(document).on("click", "#group-tab", function ()
+      {
+        if (!$('#following_group_name .following-row').length) {
+          var noFollowingContent = `<div class="following-row">
+          <div class="empty-msg">
+              <div><img src="${noFollowinggroups}"></div>
+              <div class="nothing-to-see-mgs">Nothing to see here.</div>
+              </div>
+          </div>`;
+          $('#following_group_name').append(noFollowingContent);
+          $('#following_group_name .pagination').hide();
+
+        }
+      })
+
+      $(document).on("click", "#user-tab", function ()
+      {
+        if (!$('#following_users .following-row').length) {
+          var noFollowingContent = `<div class="following-row">
+          <div class="empty-msg">
+              <div><img src="${noFollowingUsers}"></div>
+              <div class="nothing-to-see-mgs">Nothing to see here.</div>
+              </div>
+          </div>`;
+          $('#following_users').append(noFollowingContent);
+          $('#following_users .pagination').hide();
+        
+        }
+
+        
+      })
+
+      $(document).on("click", "#item-tab", function ()
+      {
+        if (!$('#following_items .following-row').length) {
+          var noFollowingContent = `<div class="following-row">
+          <div class="empty-msg">
+              <div><img src="${noFollowingitems}"></div>
+              <div class="nothing-to-see-mgs">Nothing to see here.</div>
+              </div>
+          </div>`;
+          $('#following_items').append(noFollowingContent);
+          $('#following_items .pagination').hide();
+
+        }
+      })
+
 
       //remove button 
       $(document).on("click", ".remove", function ()
@@ -1341,6 +1403,7 @@ function  getUserCustomFields(merchantGuid,callback) {
         if (refType == 'following_users') {
           var followingUsers = $('#following-user-list').val().split(',');
           followingUsers = followingUsers.filter(function (value) { return value !== refId; })
+          $('#following-user-list').val(followingUsers);
           unFollow(userId, refId, followingUsers, 'users')
         }
 
@@ -1348,15 +1411,14 @@ function  getUserCustomFields(merchantGuid,callback) {
           var followingUsers = $('#following-group-list').val().split(',');
           followingUsers = followingUsers.filter(function (value) { return value !== refId; })
           unFollow(userId, refId, followingUsers, 'group')
+          $('#following-group-list').val(followingUsers)
         }
 
         if (refType == 'following_items') {
           var followingItems = $('#following-item-list').val().split(',');
           followingItems = followingItems.filter(function (value) { return value !== refId; })
-
-         // saveItemCustomFields(followingItems, itemGuid, allItemFollowers);
-
           unFollow(userId, refId, followingItems, 'items')
+          $('#following-item-list').val(followingItems);
         }
 
       
