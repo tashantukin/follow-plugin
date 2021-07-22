@@ -116,6 +116,13 @@
     color: #FFFFFF;
 }
 
+.following-button.follow {
+    background: #ED6665;
+    border: 1px solid #ED6665;
+    color: #FFFFFF;
+}
+
+
 .following-plug-container .tab-pane {
     display: none;
 }

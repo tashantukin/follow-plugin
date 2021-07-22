@@ -58,7 +58,7 @@
       {
         getUserDetails(userId, function (user)
         {
-          userRow = `<div class="following-row">
+          userRow = `<div class="following-row" data-guid="${user['ID']}">
             <div class="following-image">
             <img src="${user['Media'][0]['MediaUrl']}">
             </div>
@@ -80,7 +80,7 @@
         getItemDetails(itemId, function (item)
         {
           var itemName = item['Name'].replace(" ", "-").trim();
-            userRow = `<div class="following-row">
+            userRow = `<div class="following-row" data-guid="${item['ID']}">
             <a href="/user/item/detail/${itemName}/${item['ID']}" class="following-links">
                 <div class="following-image">
                     <img src="${item['Media'][0]['MediaUrl']}">
@@ -107,7 +107,7 @@
       {
         getUserDetails(userId, function (user)
         {
-            userRow = `<div class="following-row">
+            userRow = `<div class="following-row" data-guid="${user['ID']}"s>
             <a href="#" class="following-links">
                 <div class="following-image">
                     <img src="${user['Media'][0]['MediaUrl']}">
@@ -135,8 +135,8 @@
       {
         getUserDetails(userId, function (user)
         {
-            userRow = `<div class="following-row">
-            <a href="#" class="following-links">
+            userRow = `<div class="following-row" data-guid="${user['ID']}">
+            <a href="#" class="following-links">s
                 <div class="following-image">
                     <img src="${user['Media'][0]['MediaUrl']}">
                 </div>
@@ -327,10 +327,6 @@ function  getUserCustomFields(merchantGuid,callback) {
 		});
 	}
 
-
-
-
-
   function getUserDetails(userId, callback)
   {
     var apiUrl = `/api/v2/users/${userId}?includes=AccountOwnerID`;
@@ -518,171 +514,7 @@ function  getUserCustomFields(merchantGuid,callback) {
               }
 
             }
-            // else {  //for company status
-            //   //add the banner
-            //   var banner = `<div class="subscription_gray_message"><i class="icon icon-info"></i>This user is set as <strong>company.</strong></div>`
-            //   if (cf.Name == 'company_status' && cf.Code.startsWith(customFieldPrefix)) {
-            //     var cfCode = cf.Code;
-            //     var companyStatus = cf.Values[0];
-            //     if (companyStatus != null) {
-            //       // companyStatus == 'true' ?  : '';
-            //       if (companyStatus == 'true') {
-            //         $('.seller-titlearea').before(banner);
-            //         $('#profile-tab span').text('COMPANY PROFILE');
-            //         //label changes
-            //         $('#input-displayName').parent().find('label').text('COMPANY NAME');
-            //         $('#input-firstName').parents('.item-form-group').hide();  //hide first name and last name
-
-            //         // add the new followers tab
-            //          var followingHeader = `<li><a href="#following" onclick="Validate('#following-tab', 3, false)" id="following-tab" aria-expanded="true"><span>FOLLOWERS</span></a></li>`;
-            //         $('#setting-tab li:last-child').after(followingHeader);
-                    
-                    
-
-            //         var followingContent = `
-            //         <div class="tab-pane" id="following">
-                    
-            //         <div class="container">
-            //         <div class="company-section">
-            //             <h4></h4>
-            //             <table class="table" id="followers-table">
-            //                 <thead>
-            //                     <tr>
-            //                         <th width="125">#</th>
-            //                         <th>Work Email</th>
-            //                     </tr>
-            //                 </thead>
-            //                 <tbody>
-                               
-            //                 </tbody>
-            //             </table>
-            //         </div>
-            //         </div>
-            //         </div>`
-            //         $('#payment_acceptance').after(followingContent);
-
-            //         setTimeout(function() {	
-            //           var count = $(".seller-tab-area .nav-tabs>li").length;
-            //           $(".seller-tab-area .nav-tabs>li").each(function(index) {
-            //             var $that = $(this);
-            //             var $id = $that.find("a").attr("id");
-            //            $that.find("a").attr("onclick",`Validate('#`+$id+`', `+index+`, false)`);
-            //           });
-            //         }, 500);
-
-
-            //         //check if the logged in user is sub account
-
-            //         if ($('#subAccountUserGuid').length) {
-            //           $('.change-profile').hide();  //hide the change profile image button 
-            //           $('.subscription_gray_message').text(`This user is a sub account for the company ${$('#input-displayName').val()}`); //change the banner text
-
-            //           //rename the Profile tab => Company Profile
-            //           //$('#profile-tab span').text('COMPANY PROFILE');
-            //           //disable all the fields for parent merchant
-            //           $('#profile input').attr('disabled', true);
-            //           $('#address input').attr('disabled', true);
-            //           $('.seller-common-box textarea').attr('disabled', true);
-            //           $('.change-profile a').attr('data-target', ''); //image upload
-            //           $('#profile #next-tab').hide();  //next button
-            //           //add new header
-        
-            //           var newHeader = `<li><a data-toggle="tab" href="#new-profile" id="new-profile-tab" onclick="Validate('#profile-tab', 0, false)"><span>PROFILE</span></a></li>`;
-            //           $('#setting-tab li:nth-child(1)').after(newHeader);
-
-            //           var newProfileContent = `
-            //           <div class="tab-pane" id="new-profile">
-                      
-            //                 <div class="container">
-
-            //                     <div class="seller-common-box">
-            //                   </div>
-
-            //                 </div>    
-            //           </div>`
-
-            //           $('#payment_acceptance').after(newProfileContent);
-                        
-            //           var sellerbox = `<div class="item-form-group">
-            //           <div class="col-md-6">
-            //               <label>FIRST NAME</label>
-            //               <input type="text" name="FirstName" class="required" value="tash" id="input-sub-firstName" >
-            //           </div>
-            //           <div class="col-md-6">
-            //               <label>LAST NAME</label>
-            //               <input type="text" class="required" name="LastName" value="igi" id="input-sub-lastName">
-            //           </div>
-            //           </div>
-
-
-            //         <div class="item-form-group">
-            //               <div class="col-md-6">
-            //                   <label>NOTIFICATION EMAIL</label>
-            //                   <input type="text" class="required emailOnly" id="notification-sub-email" name="Email" value="tash@gmail.com" >
-            //               </div>
-            //               <div class="col-md-6">
-            //                   <label>CONTACT NUMBER</label>
-            //                       <input type="text" class="required phoneOnly" name="PhoneNumber" id="input-sub-contactNumber" value="3412312">
-
-            //               </div>
-            //           </div>
-            //           <div class="clearfix"></div>
-
-            //           </div>  
-
-            //           <div id="sub-settings_save" class="next-tab-area">
-
-            //               <a class="my-btn btn-red" href="javascript:void(0)"  id="next-tab">
-
-            //                   SAVE
-
-            //               </a>
-
-            //           </div>`
-                  
-            //           $('#new-profile .seller-common-box').append(sellerbox);
-
-                    
-            //         }
-
-
-            //       }
-
-            //     }
-            //     console.log(companyStatus);
-
-            //   }
-            //   //followers list table
-            //   if (cf.Name == 'followers_list' && cf.Code.startsWith(customFieldPrefix)) {
-            //     var currentFollowers = cf.Values[0];
-            //     var followersDiv = `<input type="hidden" id="followers-list" >`;
-            //     $('body').append(followersDiv);
-            //     $('#followers-list').val(currentFollowers);
-            //     followerList = $('#followers-list').val().split(',');
-            //     var activeFollowers = followerList.filter(function(v){return v.length > 5 || v != v});
-            //     console.log(`users ${activeFollowers}`);
-
-            //     var i = 1;
-            //     $.each(activeFollowers, function (index, userId)
-            //     {
-                 
-            //       getUserDetails(userId, function (user)
-            //       {
-            //           userRow = `<tr>
-            //           <td><span class="grey-col">${i}</span></td>
-            //           <td>${user['Email']}</td>
-            //           </tr>`
-                    
-            //           $('#followers-table tbody').append(userRow);
-            //         i++;
-            //       })
-      
-            //       // $('#company').append(options); 
-            //     })
-            //     $('.company-section h4').text(`${activeFollowers.length} Team Members Total`)
-
-            //   }  
-            // }
+            
         
           })
         }
@@ -774,7 +606,6 @@ function  getUserCustomFields(merchantGuid,callback) {
     });
   }
   
- 
   function getFollowing(type,page)
   {
     $('#following-list').val('');
@@ -912,7 +743,6 @@ function  getUserCustomFields(merchantGuid,callback) {
      }
     })
   }
-
   function getItemFollowers(page, itemguid)
   {
     getItemCustomFields(itemguid, function (result)
@@ -1138,6 +968,31 @@ function  getUserCustomFields(merchantGuid,callback) {
     });
   }
 
+  function unFollow(userId, unFollowedId, allFollowing, type)
+  {
+    var data  = { 'user-id' : userId, 'unfollowed-user' : unFollowedId, 'following-list' : allFollowing, type}  
+		//console.log(data);
+		var apiUrl = packagePath + '/unfollow_user.php';
+		$.ajax({
+			url: apiUrl,
+			method: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(data),
+			success: function (response)
+			{
+
+        console.log(response);
+       // getFollowing('items');
+       // loadCustomFields(merchantId,'');
+
+			},
+			error: function (jqXHR, status, err)
+			{
+				// toastr.error('---');
+			}
+		});
+   
+  }
 
   $(document).ready(function ()
   {
@@ -1430,15 +1285,7 @@ function  getUserCustomFields(merchantGuid,callback) {
    
       });
 
-       ////Following Script
-      //   $(".following-button").hover(
-      //     function () {
-      //         $(this).text("Remove").addClass('remove');
-      //     },
-      //     function () {
-      //         $(this).text("Following").removeClass("remove");
-      //     }
-      // );
+      
 
   
         $(document).on("mouseover", ".following-button" , function() {
@@ -1446,9 +1293,12 @@ function  getUserCustomFields(merchantGuid,callback) {
           if($this.text() === "Following"){
             $this.text("Remove");
             $this.addClass('remove')
-          }else {
+          }else if ($this.text() === "Follow") {
+            $this.text("Follow");
+           
+          } else {
             $this.text("Following");
-            $this.removeClass("remove");
+            $this.removeClass('remove')
           }
       });
       
@@ -1478,6 +1328,40 @@ function  getUserCustomFields(merchantGuid,callback) {
          }
         
       })
+
+
+      //remove button 
+      $(document).on("click", ".remove", function ()
+      {
+        $(this).removeClass('remove').addClass('follow');
+        $(this).text('Follow');
+        var refId = $(this).parents('.following-row').attr('data-guid');
+        var refType = ($(this).parents('.tab-pane').attr('id'));
+
+        if (refType == 'following_users') {
+          var followingUsers = $('#following-user-list').val().split(',');
+          followingUsers = followingUsers.filter(function (value) { return value !== refId; })
+          unFollow(userId, refId, followingUsers, 'users')
+        }
+
+        if (refType == 'following_group_name') {
+          var followingUsers = $('#following-group-list').val().split(',');
+          followingUsers = followingUsers.filter(function (value) { return value !== refId; })
+          unFollow(userId, refId, followingUsers, 'group')
+        }
+
+        if (refType == 'following_items') {
+          var followingItems = $('#following-item-list').val().split(',');
+          followingItems = followingItems.filter(function (value) { return value !== refId; })
+
+         // saveItemCustomFields(followingItems, itemGuid, allItemFollowers);
+
+          unFollow(userId, refId, followingItems, 'items')
+        }
+
+      
+      })
+
 
     }
     // buyer settings
@@ -1534,10 +1418,6 @@ function  getUserCustomFields(merchantGuid,callback) {
 
         });
 
-
-
-  
-    
     }
 
   
