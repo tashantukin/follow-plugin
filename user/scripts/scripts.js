@@ -307,6 +307,9 @@ function  getUserCustomFields(merchantGuid,callback) {
       },
     });
   }
+  
+
+
 
   function  getMerchantCustomFields(merchantGuid,callback) {
 		var apiUrl = packagePath + '/get_merchant_customfields.php';
@@ -969,9 +972,9 @@ function  getUserCustomFields(merchantGuid,callback) {
     });
   }
 
-  function unFollow(userId, unFollowedId, allFollowing, type)
+  function unFollow(userId, unFollowedId, allFollowing, type, action)
   {
-    var data  = { 'user-id' : userId, 'unfollowed-user' : unFollowedId, 'following-list' : allFollowing, type}  
+    var data  = { 'user-id' : userId, 'unfollowed-user' : unFollowedId, 'following-list' : allFollowing, type, action}  
 		//console.log(data);
 		var apiUrl = packagePath + '/unfollow_user.php';
 		$.ajax({
@@ -1000,7 +1003,6 @@ function  getUserCustomFields(merchantGuid,callback) {
     
     //send edm if the user is logged in 
 
-  
     if ($('#userGuid').length) {
 
       var isloggedIn = sessionStorage.getItem("isLoggedIn");
@@ -1029,7 +1031,7 @@ function  getUserCustomFields(merchantGuid,callback) {
 
         var userType;
       
-        getUserCustomFields(currentMerchant, function (result)
+        getMerchantCustomFields(currentMerchant, function (result)
         {
 
           if ( (!result) || (result == null) ) {
@@ -1425,11 +1427,45 @@ function  getUserCustomFields(merchantGuid,callback) {
       })
 
 
+
+      //follow back
+      $(document).on("click", ".follow", function ()
+      {
+        $(this).removeClass('follow');
+        $(this).text('Following');
+        var refId = $(this).parents('.following-row').attr('data-guid');
+        var refType = ($(this).parents('.tab-pane').attr('id'));
+
+        if (refType == 'following_users') {
+          var followingUsers = $('#following-user-list').val().split(',');
+          followingUsers = [...followingUsers, refId];
+          $('#following-user-list').val(followingUsers);
+          unFollow(userId, refId, followingUsers, 'users','follow')
+        }
+
+        if (refType == 'following_group_name') {
+          var followingUsers = $('#following-group-list').val().split(',');
+          followingUsers = [...followingUsers, refId];
+          // followingUsers = followingUsers.filter(function (value) { return value !== refId; })
+          unFollow(userId, refId, followingUsers, 'group','follow')
+          $('#following-group-list').val(followingUsers)
+        }
+
+        if (refType == 'following_items') {
+          var followingItems = $('#following-item-list').val().split(',');
+          followingItems= [...followingItems, refId];
+          unFollow(userId, refId, followingItems, 'items','follow')
+          $('#following-item-list').val(followingItems);
+        }
+      
+      })
+
+
+
+
+
     }
-    // buyer settings
-    // if (pathname.indexOf('/user/marketplace/user-settings') > -1) {
     
-    //merchannt order details
 
     if (pathname.indexOf('user/manage/order/details') >= 0) {
 
@@ -1482,7 +1518,6 @@ function  getUserCustomFields(merchantGuid,callback) {
 
     }
 
-  
   //item deleted EDM
     if (pathname.indexOf('user/item/list') >= 0) {
 

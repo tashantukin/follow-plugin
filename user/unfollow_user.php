@@ -15,7 +15,7 @@ $user_id = $content['user-id'];
 $unfollowed_userId = $content['unfollowed-user'];
 $following_list = $content['following-list'];
 $user_type = $content['type'];
-
+$action = $content['action'];
 
 $baseUrl = getMarketplaceBaseUrl();
 $admin_token = getAdminToken();
@@ -63,13 +63,20 @@ foreach ($packageCustomFields as $cf) {
     foreach($item['CustomFields'] as $cf) { 
         if ($cf['Name'] == 'item_followers' && substr($cf['Code'], 0, strlen($customFieldPrefix)) == $customFieldPrefix) {
             $followers = explode(',', $cf['Values'][0]);
-            $remaining_followers = array_filter($followers, function($e) use ($user_id) {
-                return ($e !== $user_id);
-            });
-            if (empty($remaining_followers)) {
-                $remaining_followers = "";
+            //follow back feature
+            if ($action == 'follow') {
+                $remaining_followers = array_push($followers,$user_id);
+                    
+            }else {
+                $remaining_followers = array_filter($followers, function($e) use ($user_id) {
+                    return ($e !== $user_id);
+                });
+                if (empty($remaining_followers)) {
+                    $remaining_followers = "";
+                }
+                error_log(json_encode($remaining_followers));
             }
-            error_log(json_encode($remaining_followers));
+            
         }
     }
 
@@ -112,13 +119,18 @@ foreach ($packageCustomFields as $cf) {
         foreach($user['CustomFields'] as $cf) { 
             if ($cf['Name'] == 'followers_list' && substr($cf['Code'], 0, strlen($customFieldPrefix)) == $customFieldPrefix) {
                 $followers = explode(',', $cf['Values'][0]);
-                $remaining_followers = array_filter($followers, function($e) use ($user_id) {
-                    return ($e !== $user_id);
-                });
-                if (empty($remaining_followers)) {
-                    $remaining_followers = "";
+                if ($action == 'follow') {
+                    $remaining_followers = array_push($followers,$user_id);
+                        
+                }else {
+                    $remaining_followers = array_filter($followers, function($e) use ($user_id) {
+                        return ($e !== $user_id);
+                    });
+                    if (empty($remaining_followers)) {
+                        $remaining_followers = "";
+                    }
+                    error_log(json_encode($remaining_followers));
                 }
-                error_log(json_encode($remaining_followers));
             }
         }
     
