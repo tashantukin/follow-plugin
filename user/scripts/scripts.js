@@ -24,9 +24,6 @@
   var pathname = (window.location.pathname + window.location.search).toLowerCase();
   var companies;
   var merchantName;
-  var isCompanyFollowAllowed;
-  var isUserFollowAllowed;
-  var isItemFollowAllowed;
   var isCompany;
   var buyerId;
   var noFollowingUsers = `${location.protocol}//${hostname}/user/plugins/${packageId}/images/empty-user.svg`;
@@ -43,17 +40,20 @@
       }
     }
 
-  
   function paginator(items, current_page, per_page_items, tab) {
     let page = current_page || 1,
     per_page = per_page_items || 20,
     offset = (page - 1) * per_page,
+   
 
     paginatedItems = items.slice(offset).slice(0, per_page_items),
       total_pages = Math.ceil(items.length / per_page);
     
     $(`#${tab} .pagination`).find('.list').remove();
     $(`#${tab}`).find('.following-row').remove();
+
+    var pre_page = page - 1 ? page - 1 : null
+    var next_page = (total_pages > page) ? page + 1 : null
     
     if (tab == "followers") {
       $.each(paginatedItems, function (index, userId)
@@ -109,7 +109,7 @@
       {
         getUserDetails(userId, function (user)
         {
-            userRow = `<div class="following-row" data-guid="${user['ID']}"s>
+            userRow = `<div class="following-row" data-guid="${user['ID']}">
             <a href="#" class="following-links">
                 <div class="following-image">
                     <img src="${user['Media'][0]['MediaUrl']}">
@@ -138,7 +138,7 @@
         getUserDetails(userId, function (user)
         {
             userRow = `<div class="following-row" data-guid="${user['ID']}">
-            <a href="#" class="following-links">s
+            <a href="#" class="following-links">
                 <div class="following-image">
                     <img src="${user['Media'][0]['MediaUrl']}">
                 </div>
@@ -165,15 +165,17 @@
     while (i <= total_pages) {
       if (i == 1) {
 
-        pagination_list += `<li class="active list" id="first-page" indx= ${i}><a href="#">${i}</a></li>`; 
+        pagination_list += `<li class="active list" id="first-page" indx= ${i}><a href="javascript:void(0);">${i}</a></li>`; 
       } else {
-        pagination_list += `<li indx= ${i} class="list"><a href="#">${i}</a></li>`
+        pagination_list += `<li indx= ${i} class="list"><a href="javascript:void(0);">${i}</a></li>`
       }
       i++;
     }
     console.log(`pages ${pagination_list} `)
     $(`#${tab} .pagination li`).last().before(pagination_list);
 
+    $(`#${tab} .pagination`).find('#previous').attr('indx', pre_page);
+    $(`#${tab} .pagination`).find('#next').attr('indx', next_page);
 
     return {
         page: page,
@@ -186,7 +188,6 @@
     };
   }
 
-  
   const distinct = (value, index, self) =>
   {
     return self.indexOf(value) === index
@@ -288,7 +289,7 @@
         }
     });
   }
-function  getUserCustomFields(merchantGuid,callback) {
+  function  getUserCustomFields(merchantGuid,callback) {
     var apiUrl = `/api/v2/users/${merchantGuid}`;
 
     console.log(apiUrl);
@@ -308,9 +309,6 @@ function  getUserCustomFields(merchantGuid,callback) {
     });
   }
   
-
-
-
   function  getMerchantCustomFields(merchantGuid,callback) {
 		var apiUrl = packagePath + '/get_merchant_customfields.php';
 		var data = { 'userId': merchantGuid };
@@ -1210,10 +1208,10 @@ function  getUserCustomFields(merchantGuid,callback) {
               </div>
                   <div class="sellritemlst-btm-pgnav">
                       <ul class="pagination">
-                          <li> <a href="#" aria-label="Previous" id="previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                          <li id="previous" indx="" > <a href="javascript:void(0);" aria-label="Previous" > <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
                           
                          
-                          <li> <a href="#" aria-label="Next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
+                          <li id="next" indx=""> <a href="javascript:void(0);" aria-label="Next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
                       </ul>
                   </div>
               </div>
@@ -1223,9 +1221,9 @@ function  getUserCustomFields(merchantGuid,callback) {
                   </div>
                   <div class="sellritemlst-btm-pgnav">
                       <ul class="pagination">
-                          <li> <a href="#" aria-label="Previous"id="previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                          <li id="previous" indx=""> <a href="javascript:void(0);" aria-label="Previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
                          
-                          <li> <a href="#" aria-label="Next" id="next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
+                          <li id="next" indx=""> <a href="javascript:void(0);" aria-label="Next" > <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
                       </ul>
                   </div>
               </div>
@@ -1235,9 +1233,9 @@ function  getUserCustomFields(merchantGuid,callback) {
               </div>
                   <div class="sellritemlst-btm-pgnav">
                       <ul class="pagination">
-                          <li> <a href="#" aria-label="Previous" id="previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                          <li id="previous" indx=""> <a href="javascript:void(0);" aria-label="Previous" > <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
                          
-                          <li> <a href="#" aria-label="Next" id="next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
+                          <li id="next" indx=""> <a href="javascript:void(0);" aria-label="Next" > <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
                       </ul>
                   </div>
               </div>
@@ -1255,9 +1253,9 @@ function  getUserCustomFields(merchantGuid,callback) {
               </div>
                   <div class="sellritemlst-btm-pgnav">
                       <ul class="pagination">
-                          <li> <a href="#" aria-label="Previous" id="previous"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
+                          <li id="previous" indx=""> <a href="javascript:void(0);" aria-label="Previous" > <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-left"></i></span> </a> </li>
                          
-                          <li> <a href="#" aria-label="Next" id="next"> <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
+                          <li id="next" indx=""> <a href="javascript:void(0);" aria-label="Next" > <span aria-hidden="true"><i class="glyphicon glyphicon-chevron-right"></i></span> </a> </li>
                       </ul>
                   </div>
               </div>
@@ -1289,7 +1287,7 @@ function  getUserCustomFields(merchantGuid,callback) {
       });
 
     
-        $(document).on("mouseover", ".following-button" , function() {
+      $(document).on("mouseover", ".following-button" , function() {
         var $this = $(this);
           if($this.text() === "Following"){
             $this.text("Remove");
@@ -1303,29 +1301,39 @@ function  getUserCustomFields(merchantGuid,callback) {
           }
       });
       
-
       $(document).on("click", ".pagination li" , function() {
        //$(".pagination li").click(function(){
         console.log('li click');
         
-      
          var tab = ($(this).parents('.tab-pane').attr('id'));
        //  $(this).parents('.tab-pane').find('.following-row').remove();
          if (tab == 'followers') {
          
-          paginator($('#followers-list').val().split(','), parseInt($(this).attr('indx')), 20, tab)
+           paginator($('#followers-list').val().split(','), parseInt($(this).attr('indx')), 20, tab)
+           //previous button
+          //  $(this).parent('.pagination').find('#previous').attr('indx', (parseInt($(this).attr('indx')) - 1) );
+          //  $(this).parent('.pagination').find('#next').attr('indx', (parseInt($(this).attr('indx')) + 1));
          }
 
          if (tab == 'following_items') {
          
            paginator($('#following-item-list').val().split(','), parseInt($(this).attr('indx')), 20, tab)
+          //  $(this).parent('.pagination').find('#previous').attr('indx', (parseInt($(this).attr('indx')) - 1));
+          //  $(this).parent('.pagination').find('#next').attr('indx', (parseInt($(this).attr('indx')) + 1));
            
-         }
+        }
+        
          if (tab == 'following_users') {
-          paginator($('#following-user-list').val().split(','), parseInt($(this).attr('indx')), 20,tab)
-         }
+           paginator($('#following-user-list').val().split(','), parseInt($(this).attr('indx')), 20, tab)
+          //  $(this).parent('.pagination').find('#previous').attr('indx', (parseInt($(this).attr('indx')) - 1));
+          //  $(this).parent('.pagination').find('#next').attr('indx', (parseInt($(this).attr('indx')) + 1));
+        }
+        
+
          if (tab == 'following_group_name') {
-          paginator($('#following-group-list').val().split(','), parseInt($(this).attr('indx')), 20, tab)
+           paginator($('#following-group-list').val().split(','), parseInt($(this).attr('indx')), 20, tab)
+          //  $(this).parent('.pagination').find('#previous').attr('indx', (parseInt($(this).attr('indx')) - 1));
+          //  $(this).parent('.pagination').find('indx', (parseInt($(this).attr('indx')) + 1));
          }
         
       })
@@ -1426,8 +1434,6 @@ function  getUserCustomFields(merchantGuid,callback) {
       
       })
 
-
-
       //follow back
       $(document).on("click", ".follow", function ()
       {
@@ -1459,10 +1465,6 @@ function  getUserCustomFields(merchantGuid,callback) {
         }
       
       })
-
-
-
-
 
     }
     
