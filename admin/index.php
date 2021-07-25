@@ -151,7 +151,7 @@
         </div>
 
         </div>
-        <div class="clearfix"></div>
+        <!-- <div class="clearfix"></div>
 
         <div>
             <p>Email templates</p>
@@ -160,10 +160,10 @@
             <a href="create_page.php" class="blue-btn">Create New Template</a>
           </div>
         </div>
-      </div>
+      </div> -->
   <!-- ORDERS -->
 
-  <div class="div" id="app">
+  <!-- <div class="div" id="app">
   <div class="panel-box panel-style-ab" >
         <div class="panel-box-title">
             <h3>Seller</h3>
@@ -179,10 +179,10 @@
                 </li>
             </ul>
         </div>
-    </div>
+    </div> -->
 
     <!-- PAYMENTS -->
-    <div class="panel-box panel-style-ab">
+    <!-- <div class="panel-box panel-style-ab">
         <div class="panel-box-title">
             <h3>Buyer</h3>
             <div class="pull-right"><a class="panel-toggle" href="javascript:void(0);"><i class="icon icon-toggle"></i></a></div>
@@ -197,10 +197,10 @@
                 </li>
             </ul>
         </div>
-    </div>
+    </div> -->
 
  <!-- SHIPPING -->
- <div class="panel-box panel-style-ab">
+ <!-- <div class="panel-box panel-style-ab">
         <div class="panel-box-title">
             <h3>Items</h3>
             <div class="pull-right"><a class="panel-toggle" href="javascript:void(0);"><i class="icon icon-toggle"></i></a></div>
@@ -217,7 +217,7 @@
         </div>
     </div>
 
-  </div>
+  </div> -->
     
 
     </div>
